@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Casa do Vinho 🍷</title>
+  <title>Adega Premium 🍷</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://kit.fontawesome.com/9e62b207e5.js" crossorigin="anonymous"></script>
 </head>
 <body>
-  <!-- HEADER -->
+  <!-- HEADER FIXO -->
   <header class="topo">
     <div class="topo-left">
       <button id="btn-menu" class="btn-menu">
@@ -16,7 +16,7 @@
         <span>Todos</span>
       </button>
 
-      <a class="logo" href="index.html">🍷 Casa do Vinho</a>
+      <a class="logo" href="index.html">🍷 Adega Premium</a>
     </div>
 
     <nav class="menu">
@@ -24,7 +24,6 @@
       <a href="#catalogo">Vinhos</a>
       <a href="#contato">Contato</a>
     </nav>
-   
 
     <div class="topo-right">
       <button id="theme-toggle" class="theme-toggle" title="Trocar tema">
@@ -34,6 +33,7 @@
       <button id="btn-cart" class="btn-cart" aria-label="Abrir carrinho">
         <i class="fa-solid fa-cart-shopping"></i>
         <span id="cart-count" class="cart-count">0</span>
+        <span class="cart-text">Entrar no carrinho</span>
       </button>
     </div>
   </header>
@@ -61,7 +61,9 @@
         <h2>Tipos de Vinhos</h2>
         <ul class="submenu">
           <li class="expand">
-            <span class="submenu-trigger">Tintos <i class="fa-solid fa-chevron-down"></i></span>
+            <span class="submenu-trigger">
+              Tintos <i class="fa-solid fa-chevron-down"></i>
+            </span>
             <ul class="submenu-list">
               <li><a href="#">Cabernet Sauvignon</a></li>
               <li><a href="#">Merlot</a></li>
@@ -70,7 +72,9 @@
           </li>
 
           <li class="expand">
-            <span class="submenu-trigger">Brancos <i class="fa-solid fa-chevron-down"></i></span>
+            <span class="submenu-trigger">
+              Brancos <i class="fa-solid fa-chevron-down"></i>
+            </span>
             <ul class="submenu-list">
               <li><a href="#">Chardonnay</a></li>
               <li><a href="#">Sauvignon Blanc</a></li>
@@ -85,18 +89,18 @@
     </div>
   </aside>
 
-  <!-- HERO / CARROSSEL -->
+  <!-- HERO / CARROSSEL + PROMOÇÃO -->
   <section class="hero">
     <div class="carrossel">
       <div class="slides" id="slides">
         <div class="slide active">
-          <img src="vinhospromocao01.png" alt="Promoção Especial" />
+          <img src="https://images.unsplash.com/photo-1590080875830-54800b6c667f?auto=format&fit=crop&w=1600&q=80" alt="Promoção Especial">
         </div>
         <div class="slide">
-          <img src="vinhospromocao.png" alt="Seleção Importada" />
+          <img src="https://images.unsplash.com/photo-1559718062-361140060c59?auto=format&fit=crop&w=1600&q=80" alt="Seleção Importada">
         </div>
         <div class="slide">
-          <img src="vinhospromocao02.png" alt="Espumantes Premium" />
+          <img src="https://images.unsplash.com/photo-1575224526797-5730d09b3f9d?auto=format&fit=crop&w=1600&q=80" alt="Espumantes Premium">
         </div>
       </div>
 
@@ -108,20 +112,22 @@
       </button>
     </div>
 
-    <!-- BANNER PROMOÇÃO DA SEMANA COM CONTADOR -->
+    <!-- BANNER PROMOÇÃO DA SEMANA -->
     <div class="promo-banner">
       <div class="promo-inner">
         <div class="promo-text">
           <h2>🍾 Promoção da Semana</h2>
-          <p>Descontos exclusivos em rótulos selecionados.<br />
-          Termina em <span id="contador" class="contador-destaque"></span></p>
+          <p>
+            Descontos exclusivos em rótulos selecionados.<br>
+            Termina em <span id="contador" class="contador-destaque"></span>
+          </p>
         </div>
         <a href="#catalogo" class="btn-promocao">Ver Ofertas</a>
       </div>
     </div>
   </section>
 
-  <!-- CATÁLOGO / PRODUTOS -->
+  <!-- CATÁLOGO -->
   <main>
     <section id="catalogo" class="produtos">
       <div class="sec-header">
@@ -132,7 +138,7 @@
       </div>
 
       <div id="lista-produtos" class="lista-produtos">
-        <!-- JS vai renderizar os produtos aqui -->
+        <!-- JS insere os cards aqui -->
       </div>
     </section>
 
@@ -162,11 +168,17 @@
     </div>
   </div>
 
+  <!-- BOTÃO DE CARRINHO FIXO NO CANTO INFERIOR DIREITO -->
+  <button id="floating-cart" class="floating-cart">
+    <i class="fa-solid fa-cart-shopping"></i>
+    <span id="cart-count-float" class="cart-count">0</span>
+    <span class="cart-text-float">Carrinho</span>
+  </button>
+
   <footer class="footer">
-    <p>© 2025 Casa do Vinho · Qualidade em cada taça 🍇</p>
+    <p>© 2025 Adega Premium · Qualidade em cada taça 🍇</p>
   </footer>
 
   <script src="script.js"></script>
 </body>
 </html>
-seleção Importada

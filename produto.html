@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Detalhes do Vinho | Casa de Vinho</title>
+  <title>Detalhes do Vinho | Adega Premium</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://kit.fontawesome.com/9e62b207e5.js" crossorigin="anonymous"></script>
 </head>
 <body>
-  <!-- HEADER -->
+  <!-- HEADER FIXO -->
   <header class="topo">
     <div class="topo-left">
       <button id="btn-menu" class="btn-menu">
@@ -16,7 +16,7 @@
         <span>Todos</span>
       </button>
 
-      <a class="logo" href="index.html">🍷 Casa de Vinho</a>
+      <a class="logo" href="index.html">🍷 Adega Premium</a>
     </div>
 
     <nav class="menu">
@@ -33,6 +33,7 @@
       <button id="btn-cart" class="btn-cart" aria-label="Abrir carrinho">
         <i class="fa-solid fa-cart-shopping"></i>
         <span id="cart-count" class="cart-count">0</span>
+        <span class="cart-text">Entrar no carrinho</span>
       </button>
     </div>
   </header>
@@ -60,7 +61,9 @@
         <h2>Tipos de Vinhos</h2>
         <ul class="submenu">
           <li class="expand">
-            <span class="submenu-trigger">Tintos <i class="fa-solid fa-chevron-down"></i></span>
+            <span class="submenu-trigger">
+              Tintos <i class="fa-solid fa-chevron-down"></i>
+            </span>
             <ul class="submenu-list">
               <li><a href="#">Cabernet Sauvignon</a></li>
               <li><a href="#">Merlot</a></li>
@@ -69,7 +72,9 @@
           </li>
 
           <li class="expand">
-            <span class="submenu-trigger">Brancos <i class="fa-solid fa-chevron-down"></i></span>
+            <span class="submenu-trigger">
+              Brancos <i class="fa-solid fa-chevron-down"></i>
+            </span>
             <ul class="submenu-list">
               <li><a href="#">Chardonnay</a></li>
               <li><a href="#">Sauvignon Blanc</a></li>
@@ -84,11 +89,11 @@
     </div>
   </aside>
 
-  <!-- DETALHE DO PRODUTO -->
-  <main class="produto-page">
-    <div id="produto-detalhe" class="produto-detalhe">
-      <!-- script.js injeta aqui o layout do produto -->
-    </div>
+  <!-- CONTEÚDO DO PRODUTO -->
+  <main class="page-wrapper">
+    <section id="produto-detalhe" class="produto-detalhe">
+      <!-- script.js vai montar aqui -->
+    </section>
   </main>
 
   <!-- MODAL DO CARRINHO -->
@@ -108,8 +113,15 @@
     </div>
   </div>
 
+  <!-- BOTÃO DE CARRINHO FIXO -->
+  <button id="floating-cart" class="floating-cart">
+    <i class="fa-solid fa-cart-shopping"></i>
+    <span id="cart-count-float" class="cart-count">0</span>
+    <span class="cart-text-float">Carrinho</span>
+  </button>
+
   <footer class="footer">
-    <p>© 2025 Casa de Vinho · Brinde aos bons momentos 🍾</p>
+    <p>© 2025 Adega Premium · Brinde aos bons momentos 🍾</p>
   </footer>
 
   <script src="script.js"></script>

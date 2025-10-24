@@ -65,7 +65,7 @@ const produtos = [
 ];
 
 /**********************************************************
- * FUNÇÕES GERAIS
+ * HELPERS
  **********************************************************/
 function formatarPreco(v) {
   return `R$ ${v.toFixed(2).replace('.', ',')}`;
@@ -77,31 +77,49 @@ function gerarEstrelas(av) {
 }
 
 /**********************************************************
- * CARRINHO
+ * CARRINHO (estado + sincronização)
  **********************************************************/
 let carrinho = JSON.parse(localStorage.getItem("carrinho")) || [];
-
-function salvarCarrinho() {
-  localStorage.setItem("carrinho", JSON.stringify(carrinho));
-}
 
 function contarItensCarrinho() {
   return carrinho.reduce((acc, item) => acc + item.qtd, 0);
 }
 
-function atualizarBadgeCarrinho() {
+/* Atualiza o número nos dois lugares:
+   - bolinha no header (cart-count)
+   - bolinha do botão flutuante (cart-count-float) */
+function atualizarTodosContadores() {
   const cartCount = document.getElementById("cart-count");
-  if (cartCount) cartCount.textContent = contarItensCarrinho();
+  const cartCountFloat = document.getElementById("cart-count-float");
+  const totalQtd = contarItensCarrinho();
+
+  if (cartCount) cartCount.textContent = totalQtd;
+  if (cartCountFloat) cartCountFloat.textContent = totalQtd;
+}
+
+function salvarCarrinho() {
+  localStorage.setItem("carrinho", JSON.stringify(carrinho));
+  atualizarTodosContadores();
 }
 
 function adicionarAoCarrinhoPorID(idProd) {
   const prod = produtos.find(p => p.id === idProd);
   if (!prod) return;
+
   const ja = carrinho.find(i => i.id === idProd);
-  if (ja) ja.qtd++;
-  else carrinho.push({ id: prod.id, nome: prod.nome, preco: prod.preco, imagem: prod.imagem, qtd: 1 });
+  if (ja) {
+    ja.qtd++;
+  } else {
+    carrinho.push({
+      id: prod.id,
+      nome: prod.nome,
+      preco: prod.preco,
+      imagem: prod.imagem,
+      qtd: 1
+    });
+  }
+
   salvarCarrinho();
-  atualizarBadgeCarrinho();
   renderCarrinho();
   mostrarToast(`${prod.nome} adicionado ao carrinho!`);
 }
@@ -110,12 +128,16 @@ function mudarQuantidade(idProd, delta) {
   const item = carrinho.find(p => p.id === idProd);
   if (!item) return;
   item.qtd += delta;
-  if (item.qtd <= 0) carrinho = carrinho.filter(p => p.id !== idProd);
+  if (item.qtd <= 0) {
+    carrinho = carrinho.filter(p => p.id !== idProd);
+  }
   salvarCarrinho();
-  atualizarBadgeCarrinho();
   renderCarrinho();
 }
 
+/**********************************************************
+ * MODAL DO CARRINHO
+ **********************************************************/
 function renderCarrinho() {
   const cartItems = document.getElementById("cart-items");
   const cartTotal = document.getElementById("cart-total");
@@ -149,8 +171,10 @@ function renderCarrinho() {
     `;
     cartItems.appendChild(div);
   });
+
   cartTotal.textContent = formatarPreco(total);
 
+  // botões + e -
   cartItems.querySelectorAll(".cart-qtd-btn").forEach(btn => {
     btn.addEventListener("click", e => {
       const id = e.currentTarget.getAttribute("data-id");
@@ -160,39 +184,38 @@ function renderCarrinho() {
   });
 }
 
-/**********************************************************
- * TOAST (mensagem ao adicionar produto)
- **********************************************************/
-function mostrarToast(msg) {
-  const aviso = document.createElement("div");
-  aviso.className = "toast";
-  aviso.textContent = msg;
-  document.body.appendChild(aviso);
-  setTimeout(() => aviso.remove(), 2000);
-}
-
-/**********************************************************
- * MODAL DO CARRINHO
- **********************************************************/
 function configurarModalCarrinho() {
   const btnCart = document.getElementById("btn-cart");
+  const floatCart = document.getElementById("floating-cart");
   const cartModal = document.getElementById("cart-modal");
   const cartClose = document.getElementById("cart-close");
-  if (!btnCart || !cartModal || !cartClose) return;
 
-  btnCart.addEventListener("click", () => cartModal.setAttribute("aria-hidden", "false"));
-  cartClose.addEventListener("click", () => cartModal.setAttribute("aria-hidden", "true"));
+  if (!cartModal) return;
+
+  function abrirCarrinho() {
+    cartModal.setAttribute("aria-hidden", "false");
+  }
+  function fecharCarrinho() {
+    cartModal.setAttribute("aria-hidden", "true");
+  }
+
+  btnCart && btnCart.addEventListener("click", abrirCarrinho);
+  floatCart && floatCart.addEventListener("click", abrirCarrinho);
+
+  cartClose && cartClose.addEventListener("click", fecharCarrinho);
+
   cartModal.addEventListener("click", e => {
-    if (e.target === cartModal) cartModal.setAttribute("aria-hidden", "true");
+    if (e.target === cartModal) fecharCarrinho();
   });
 }
 
 /**********************************************************
- * MENU LATERAL (agora abre e fecha com o mesmo botão)
+ * MENU LATERAL (Todos)
  **********************************************************/
 function configurarSideMenu() {
   const sideMenu = document.getElementById("side-menu");
   if (!sideMenu) return;
+
   const btnMenu = document.getElementById("btn-menu");
   const closeMenu = document.getElementById("close-menu");
   const overlay = sideMenu.querySelector(".side-menu-overlay");
@@ -208,16 +231,19 @@ function configurarSideMenu() {
 
   sideMenu.querySelectorAll(".expand").forEach(li => {
     const trigger = li.querySelector(".submenu-trigger");
-    trigger.addEventListener("click", () => li.classList.toggle("open"));
+    trigger.addEventListener("click", () => {
+      li.classList.toggle("open");
+    });
   });
 }
 
 /**********************************************************
- * CARROSSEL
+ * CARROSSEL DA HOME
  **********************************************************/
 function configurarCarrossel() {
   const slidesWrapper = document.getElementById("slides");
   if (!slidesWrapper) return;
+
   const slides = slidesWrapper.querySelectorAll(".slide");
   const nextBtn = document.getElementById("next");
   const prevBtn = document.getElementById("prev");
@@ -226,10 +252,12 @@ function configurarCarrossel() {
   function mostrarSlide() {
     slidesWrapper.style.transform = `translateX(-${idx * 100}%)`;
   }
+
   function avanca() {
     idx = (idx + 1) % slides.length;
     mostrarSlide();
   }
+
   function volta() {
     idx = (idx - 1 + slides.length) % slides.length;
     mostrarSlide();
@@ -237,19 +265,25 @@ function configurarCarrossel() {
 
   nextBtn && nextBtn.addEventListener("click", avanca);
   prevBtn && prevBtn.addEventListener("click", volta);
+
+  // troca automática
   setInterval(avanca, 5000);
 }
 
 /**********************************************************
- * CONTADOR DA PROMOÇÃO
+ * CONTADOR PROMOÇÃO
  **********************************************************/
 function iniciarContadorPromocao() {
   const contadorEl = document.getElementById("contador");
   if (!contadorEl) return;
+
+  // expira em 2 dias
   const fim = new Date();
   fim.setDate(fim.getDate() + 2);
+
   function atualizar() {
-    const diff = fim - new Date();
+    const agora = new Date();
+    const diff = fim - agora;
     if (diff <= 0) {
       contadorEl.textContent = "Encerrada!";
       return;
@@ -258,55 +292,89 @@ function iniciarContadorPromocao() {
     const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
     const m = Math.floor((diff / (1000 * 60)) % 60);
     const s = Math.floor((diff / 1000) % 60);
+
     contadorEl.textContent = `${d}d ${h}h ${m}m ${s}s`;
   }
+
   atualizar();
   setInterval(atualizar, 1000);
 }
 
 /**********************************************************
- * TEMA ESCURO / CLARO
+ * TEMA DARK/LIGHT
  **********************************************************/
 function configurarTema() {
   const toggle = document.getElementById("theme-toggle");
   const htmlEl = document.documentElement;
-  const salvo = localStorage.getItem("tema-adega");
-  if (salvo === "light" || salvo === "dark") htmlEl.setAttribute("data-theme", salvo);
 
-  function alternarTema() {
+  // carrega tema salvo
+  const salvo = localStorage.getItem("tema-adega");
+  if (salvo === "light" || salvo === "dark") {
+    htmlEl.setAttribute("data-theme", salvo);
+  }
+
+  toggle && toggle.addEventListener("click", () => {
     const atual = htmlEl.getAttribute("data-theme");
     const novo = atual === "dark" ? "light" : "dark";
     htmlEl.setAttribute("data-theme", novo);
     localStorage.setItem("tema-adega", novo);
-  }
-
-  toggle && toggle.addEventListener("click", alternarTema);
+  });
 }
 
 /**********************************************************
- * CATÁLOGO
+ * LISTA DE PRODUTOS NA HOME
  **********************************************************/
 function renderCatalogo() {
   const lista = document.getElementById("lista-produtos");
   if (!lista) return;
+
   lista.innerHTML = "";
+
   produtos.forEach(prod => {
     const card = document.createElement("div");
     card.className = "card";
+
     card.innerHTML = `
-      <div class="card-img-wrapper"><img src="${prod.imagem}" alt="${prod.nome}"></div>
+      <div class="card-img-wrapper">
+        <img src="${prod.imagem}" alt="${prod.nome}">
+      </div>
+
       <div class="card-body">
-        <div class="card-title"><a href="produto.html?id=${encodeURIComponent(prod.id)}">${prod.nome}</a></div>
-        <div class="card-rating"><span>${gerarEstrelas(prod.avaliacao)}</span> <small>${prod.avaliacao.toFixed(1)} (${prod.avaliacoesQtd})</small></div>
-        <div class="card-desc">${prod.descricaoCurta}</div>
-        <div class="card-price"><strong>${formatarPreco(prod.preco)}</strong> <span>à vista</span></div>
-        <div class="card-actions">
-          <button class="btn-add-cart" data-id="${prod.id}"><i class="fa-solid fa-cart-plus"></i> Adicionar ao carrinho</button>
-          <a class="btn-detalhes" href="produto.html?id=${encodeURIComponent(prod.id)}">Ver detalhes</a>
+        <div class="card-title">
+          <a href="produto.html?id=${encodeURIComponent(prod.id)}">
+            ${prod.nome}
+          </a>
         </div>
-      </div>`;
+
+        <div class="card-rating">
+          <span>${gerarEstrelas(prod.avaliacao)}</span>
+          <small>${prod.avaliacao.toFixed(1)} (${prod.avaliacoesQtd})</small>
+        </div>
+
+        <div class="card-desc">${prod.descricaoCurta}</div>
+
+        <div class="card-price">
+          <strong>${formatarPreco(prod.preco)}</strong>
+          <span>à vista</span>
+        </div>
+
+        <div class="card-actions">
+          <button class="btn-add-cart" data-id="${prod.id}">
+            <i class="fa-solid fa-cart-plus"></i>
+            Adicionar ao carrinho
+          </button>
+
+          <a class="btn-detalhes" href="produto.html?id=${encodeURIComponent(prod.id)}">
+            Ver detalhes
+          </a>
+        </div>
+      </div>
+    `;
+
     lista.appendChild(card);
   });
+
+  // botões "Adicionar ao carrinho"
   lista.querySelectorAll(".btn-add-cart").forEach(btn => {
     btn.addEventListener("click", e => {
       const id = e.currentTarget.getAttribute("data-id");
@@ -316,7 +384,7 @@ function renderCatalogo() {
 }
 
 /**********************************************************
- * PRODUTO DETALHE
+ * PÁGINA DE PRODUTO DETALHE
  **********************************************************/
 function getParamId() {
   const url = new URL(window.location.href);
@@ -326,20 +394,34 @@ function getParamId() {
 function renderProdutoDetalhe() {
   const target = document.getElementById("produto-detalhe");
   if (!target) return;
+
   const id = getParamId();
   const prod = produtos.find(p => p.id === id);
+
   if (!prod) {
-    target.innerHTML = "<p style='color:var(--text-muted)'>Produto não encontrado.</p>";
+    target.innerHTML = `<p style="color:var(--text-muted)">Produto não encontrado.</p>`;
     return;
   }
 
   const parcela = prod.preco / 3;
+
   target.innerHTML = `
-    <div class="produto-galeria"><img src="${prod.imagem}" alt="${prod.nome}"></div>
+    <div class="produto-galeria">
+      <img src="${prod.imagem}" alt="${prod.nome}">
+    </div>
+
     <div class="produto-info">
       <h1>${prod.nome}</h1>
-      <div class="produto-avaliacao"><span>${gerarEstrelas(prod.avaliacao)}</span> <small>${prod.avaliacao.toFixed(1)} (${prod.avaliacoesQtd} avaliações)</small></div>
-      <div class="produto-descricao">${prod.descricaoLonga}</div>
+
+      <div class="produto-avaliacao">
+        <span>${gerarEstrelas(prod.avaliacao)}</span>
+        <small>${prod.avaliacao.toFixed(1)} (${prod.avaliacoesQtd} avaliações)</small>
+      </div>
+
+      <div class="produto-descricao">
+        ${prod.descricaoLonga}
+      </div>
+
       <ul class="produto-lista">
         <li><strong>Marca:</strong> ${prod.marca}</li>
         <li><strong>Tipo:</strong> ${prod.tipo}</li>
@@ -347,19 +429,37 @@ function renderProdutoDetalhe() {
         <li><strong>Teor alcoólico:</strong> ${prod.teor}</li>
       </ul>
     </div>
+
     <aside class="produto-comprar">
       <p class="produto-preco">${formatarPreco(prod.preco)}</p>
       <p class="produto-parcela">ou 3x de ${formatarPreco(parcela)} sem juros</p>
+
       <p class="produto-estoque">Em estoque</p>
-      <button class="btn-full-add" data-id="${prod.id}"><i class="fa-solid fa-cart-plus"></i> Adicionar ao carrinho</button>
-      <button class="btn-full-buy">Comprar agora</button>
-      <p style="font-size:.75rem;color:var(--text-muted)">Enviado e vendido por Adega Premium.</p>
-    </aside>`;
-  target.querySelector(".btn-full-add").addEventListener("click", () => adicionarAoCarrinhoPorID(prod.id));
+
+      <button class="btn-full-add" data-id="${prod.id}">
+        <i class="fa-solid fa-cart-plus"></i>
+        Adicionar ao carrinho
+      </button>
+
+      <button class="btn-full-buy">
+        Comprar agora
+      </button>
+
+      <p style="font-size:.75rem;color:var(--text-muted);margin:0;">
+        Enviado e vendido por Adega Premium.
+      </p>
+    </aside>
+  `;
+
+  // botão "Adicionar ao carrinho"
+  const btnAdd = target.querySelector(".btn-full-add");
+  btnAdd.addEventListener("click", () => {
+    adicionarAoCarrinhoPorID(prod.id);
+  });
 }
 
 /**********************************************************
- * CHECKOUT
+ * CHECKOUT (resumo e finalizar)
  **********************************************************/
 function renderCheckout() {
   const lista = document.getElementById("checkout-lista");
@@ -367,35 +467,63 @@ function renderCheckout() {
   const msg = document.getElementById("msg");
   const confirmarBtn = document.getElementById("checkout-confirmar");
   if (!lista || !totalEl || !confirmarBtn) return;
+
   const dados = JSON.parse(localStorage.getItem("carrinho")) || [];
   let total = 0;
+
   lista.innerHTML = "";
   dados.forEach(item => {
     const subtotal = item.preco * item.qtd;
     total += subtotal;
-    lista.innerHTML += `<div class="checkout-item"><div class="item-nome">${item.qtd}x ${item.nome}</div><div class="item-preco">${formatarPreco(item.preco)} cada</div><div class="item-preco">Subtotal: ${formatarPreco(subtotal)}</div></div>`;
+    lista.innerHTML += `
+      <div class="checkout-item">
+        <div class="item-nome">${item.qtd}x ${item.nome}</div>
+        <div class="item-preco">${formatarPreco(item.preco)} cada</div>
+        <div class="item-preco">Subtotal: ${formatarPreco(subtotal)}</div>
+      </div>
+    `;
   });
+
   totalEl.textContent = formatarPreco(total);
+
   confirmarBtn.addEventListener("click", () => {
     localStorage.removeItem("carrinho");
+    carrinho = [];
+    atualizarTodosContadores();
+    renderCarrinho();
+
     lista.innerHTML = "";
     totalEl.textContent = "R$ 0,00";
     msg.textContent = "Pedido confirmado! 🍷 Obrigado pela preferência.";
-    carrinho = [];
-    atualizarBadgeCarrinho();
   });
+}
+
+/**********************************************************
+ * TOAST (mensagem ao adicionar)
+ **********************************************************/
+function mostrarToast(msg) {
+  const aviso = document.createElement("div");
+  aviso.className = "toast";
+  aviso.textContent = msg;
+  document.body.appendChild(aviso);
+  setTimeout(() => aviso.remove(), 2000);
 }
 
 /**********************************************************
  * INICIALIZAÇÃO
  **********************************************************/
 document.addEventListener("DOMContentLoaded", () => {
+  // renderizações por página
   renderCatalogo();
   renderProdutoDetalhe();
   renderCheckout();
-  atualizarBadgeCarrinho();
+
+  // carrinho
+  atualizarTodosContadores();
   renderCarrinho();
   configurarModalCarrinho();
+
+  // ui
   configurarSideMenu();
   configurarCarrossel();
   iniciarContadorPromocao();

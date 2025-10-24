@@ -3,21 +3,33 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Finalizar Compra | Casa de Vinho</title>
+  <title>Finalizar Compra | Adega Premium</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://kit.fontawesome.com/9e62b207e5.js" crossorigin="anonymous"></script>
 </head>
 <body>
   <header class="topo checkout-topo">
-    <a class="logo" href="index.html">🍷 Casa de Vinho</a>
+    <a class="logo" href="index.html">🍷 Adega Premium</a>
+
+    <div class="topo-right">
+      <button id="theme-toggle" class="theme-toggle" title="Trocar tema">
+        <i class="fa-solid fa-circle-half-stroke"></i>
+      </button>
+
+      <button id="btn-cart" class="btn-cart" aria-label="Abrir carrinho">
+        <i class="fa-solid fa-cart-shopping"></i>
+        <span id="cart-count" class="cart-count">0</span>
+        <span class="cart-text">Entrar no carrinho</span>
+      </button>
+    </div>
   </header>
 
-  <main class="checkout-page">
+  <main class="checkout-page page-wrapper">
     <section class="checkout-card">
       <h1>Finalizar Compra</h1>
 
       <div id="checkout-lista" class="checkout-lista">
-        <!-- script.js coloca os itens aqui -->
+        <!-- script.js coloca os itens -->
       </div>
 
       <p class="checkout-total">
@@ -32,8 +44,32 @@
     </section>
   </main>
 
+  <!-- MODAL DO CARRINHO -->
+  <div id="cart-modal" class="cart-modal" aria-hidden="true">
+    <div class="cart-content">
+      <button id="cart-close" class="cart-close">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <h2>Seu Carrinho</h2>
+      <div id="cart-items" class="cart-items"></div>
+
+      <div class="cart-footer">
+        <p>Total: <span id="cart-total">R$ 0,00</span></p>
+        <a class="checkout-btn" href="checkout.html">Finalizar Compra</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTÃO DE CARRINHO FIXO -->
+  <button id="floating-cart" class="floating-cart">
+    <i class="fa-solid fa-cart-shopping"></i>
+    <span id="cart-count-float" class="cart-count">0</span>
+    <span class="cart-text-float">Carrinho</span>
+  </button>
+
   <footer class="footer">
-    <p>© 2025 Casa de Vinho 🍇</p>
+    <p>© 2025 Adega Premium 🍇</p>
   </footer>
 
   <script src="script.js"></script>
