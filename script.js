@@ -1,5 +1,8 @@
 /**********************************************************
- * DADOS DOS PRODUTOS
+ * PRODUTOS
+ * - agora suporta promoção (-20% OFF)
+ *   precoOriginal = preço cheio
+ *   desconto = true => mostra selo e aplica 20% off
  **********************************************************/
 const produtos = [
   {
@@ -11,7 +14,8 @@ const produtos = [
     teor: "13,5% vol",
     avaliacao: 4.7,
     avaliacoesQtd: 1287,
-    preco: 79.90,
+    precoOriginal: 99.90,
+    desconto: true,
     descricaoCurta: "Tinto chileno encorpado, notas de frutas escuras e toque de carvalho.",
     descricaoLonga:
       "Equilíbrio entre corpo, taninos macios e aromas de amora, ameixa e baunilha. Ideal para carnes vermelhas e queijos curados.",
@@ -26,7 +30,8 @@ const produtos = [
     teor: "13% vol",
     avaliacao: 4.5,
     avaliacoesQtd: 642,
-    preco: 64.50,
+    precoOriginal: 64.50,
+    desconto: false,
     descricaoCurta: "Macio e aromático, destaque brasileiro do Vale dos Vinhedos.",
     descricaoLonga:
       "Notas de frutas vermelhas maduras e leve toque de especiarias. Muito agradável para o dia a dia.",
@@ -41,7 +46,8 @@ const produtos = [
     teor: "11,5% vol",
     avaliacao: 4.8,
     avaliacoesQtd: 982,
-    preco: 49.90,
+    precoOriginal: 59.90,
+    desconto: true,
     descricaoCurta: "Refrescante, perlage fina e aromas cítricos e florais.",
     descricaoLonga:
       "Equilíbrio entre acidez e frescor, com final leve e elegante. Ideal para comemorações.",
@@ -56,7 +62,8 @@ const produtos = [
     teor: "12,5% vol",
     avaliacao: 4.6,
     avaliacoesQtd: 314,
-    preco: 89.00,
+    precoOriginal: 89.00,
+    desconto: false,
     descricaoCurta: "Rosé francês leve, floral e refrescante. Ideal para dias quentes.",
     descricaoLonga:
       "Notas florais delicadas, frutas vermelhas frescas e final limpo. Perfeito para momentos ao ar livre.",
@@ -67,6 +74,11 @@ const produtos = [
 /**********************************************************
  * HELPERS
  **********************************************************/
+function precoComDesconto(prod) {
+  if (!prod.desconto) return prod.precoOriginal;
+  return prod.precoOriginal * 0.8; // 20% OFF
+}
+
 function formatarPreco(v) {
   return `R$ ${v.toFixed(2).replace('.', ',')}`;
 }
@@ -76,8 +88,15 @@ function gerarEstrelas(av) {
   return "★".repeat(full) + "☆".repeat(5 - full);
 }
 
+// áudio "ping" suave tipo cristal
+const audioPing = new Audio(
+  "data:audio/mp3;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQCA..."
+);
+// Nota: esse base64 é ilustrativo. Em produção, coloque um base64 real de um som curto tipo 'ding'.
+// Se não tiver ainda, o site continua funcionando sem som.
+
 /**********************************************************
- * CARRINHO (estado + sincronização)
+ * CARRINHO
  **********************************************************/
 let carrinho = JSON.parse(localStorage.getItem("carrinho")) || [];
 
@@ -85,9 +104,7 @@ function contarItensCarrinho() {
   return carrinho.reduce((acc, item) => acc + item.qtd, 0);
 }
 
-/* Atualiza o número nos dois lugares:
-   - bolinha no header (cart-count)
-   - bolinha do botão flutuante (cart-count-float) */
+/* sincroniza contadores (topo + flutuante) */
 function atualizarTodosContadores() {
   const cartCount = document.getElementById("cart-count");
   const cartCountFloat = document.getElementById("cart-count-float");
@@ -113,7 +130,7 @@ function adicionarAoCarrinhoPorID(idProd) {
     carrinho.push({
       id: prod.id,
       nome: prod.nome,
-      preco: prod.preco,
+      preco: precoComDesconto(prod),
       imagem: prod.imagem,
       qtd: 1
     });
@@ -122,6 +139,12 @@ function adicionarAoCarrinhoPorID(idProd) {
   salvarCarrinho();
   renderCarrinho();
   mostrarToast(`${prod.nome} adicionado ao carrinho!`);
+
+  // tenta tocar som (não quebra se falhar autoplay)
+  if (audioPing && audioPing.play) {
+    audioPing.currentTime = 0;
+    audioPing.play().catch(() => {});
+  }
 }
 
 function mudarQuantidade(idProd, delta) {
@@ -136,7 +159,7 @@ function mudarQuantidade(idProd, delta) {
 }
 
 /**********************************************************
- * MODAL DO CARRINHO
+ * CARRINHO MODAL / RENDER
  **********************************************************/
 function renderCarrinho() {
   const cartItems = document.getElementById("cart-items");
@@ -201,7 +224,6 @@ function configurarModalCarrinho() {
 
   btnCart && btnCart.addEventListener("click", abrirCarrinho);
   floatCart && floatCart.addEventListener("click", abrirCarrinho);
-
   cartClose && cartClose.addEventListener("click", fecharCarrinho);
 
   cartModal.addEventListener("click", e => {
@@ -210,7 +232,7 @@ function configurarModalCarrinho() {
 }
 
 /**********************************************************
- * MENU LATERAL (Todos)
+ * MENU LATERAL "Todos"
  **********************************************************/
 function configurarSideMenu() {
   const sideMenu = document.getElementById("side-menu");
@@ -238,7 +260,7 @@ function configurarSideMenu() {
 }
 
 /**********************************************************
- * CARROSSEL DA HOME
+ * CARROSSEL HOME
  **********************************************************/
 function configurarCarrossel() {
   const slidesWrapper = document.getElementById("slides");
@@ -252,12 +274,10 @@ function configurarCarrossel() {
   function mostrarSlide() {
     slidesWrapper.style.transform = `translateX(-${idx * 100}%)`;
   }
-
   function avanca() {
     idx = (idx + 1) % slides.length;
     mostrarSlide();
   }
-
   function volta() {
     idx = (idx - 1 + slides.length) % slides.length;
     mostrarSlide();
@@ -265,21 +285,18 @@ function configurarCarrossel() {
 
   nextBtn && nextBtn.addEventListener("click", avanca);
   prevBtn && prevBtn.addEventListener("click", volta);
-
-  // troca automática
   setInterval(avanca, 5000);
 }
 
 /**********************************************************
- * CONTADOR PROMOÇÃO
+ * CONTADOR PROMOÇÃO SEMANAL
  **********************************************************/
 function iniciarContadorPromocao() {
   const contadorEl = document.getElementById("contador");
   if (!contadorEl) return;
 
-  // expira em 2 dias
   const fim = new Date();
-  fim.setDate(fim.getDate() + 2);
+  fim.setDate(fim.getDate() + 2); // termina em 2 dias
 
   function atualizar() {
     const agora = new Date();
@@ -292,7 +309,6 @@ function iniciarContadorPromocao() {
     const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
     const m = Math.floor((diff / (1000 * 60)) % 60);
     const s = Math.floor((diff / 1000) % 60);
-
     contadorEl.textContent = `${d}d ${h}h ${m}m ${s}s`;
   }
 
@@ -307,7 +323,6 @@ function configurarTema() {
   const toggle = document.getElementById("theme-toggle");
   const htmlEl = document.documentElement;
 
-  // carrega tema salvo
   const salvo = localStorage.getItem("tema-adega");
   if (salvo === "light" || salvo === "dark") {
     htmlEl.setAttribute("data-theme", salvo);
@@ -322,20 +337,23 @@ function configurarTema() {
 }
 
 /**********************************************************
- * LISTA DE PRODUTOS NA HOME
+ * LISTA DE PRODUTOS (HOME)
  **********************************************************/
 function renderCatalogo() {
   const lista = document.getElementById("lista-produtos");
   if (!lista) return;
-
   lista.innerHTML = "";
 
   produtos.forEach(prod => {
+    const precoFinal = precoComDesconto(prod);
+    const temDesconto = prod.desconto;
+
     const card = document.createElement("div");
     card.className = "card";
 
     card.innerHTML = `
       <div class="card-img-wrapper">
+        ${temDesconto ? `<span class="promo-tag">-20% OFF</span>` : ""}
         <img src="${prod.imagem}" alt="${prod.nome}">
       </div>
 
@@ -354,8 +372,13 @@ function renderCatalogo() {
         <div class="card-desc">${prod.descricaoCurta}</div>
 
         <div class="card-price">
-          <strong>${formatarPreco(prod.preco)}</strong>
-          <span>à vista</span>
+          ${
+            temDesconto
+              ? `<div class="preco-antigo">${formatarPreco(prod.precoOriginal)}</div>`
+              : ""
+          }
+          <div class="preco-final">${formatarPreco(precoFinal)}</div>
+          <div class="preco-label">à vista</div>
         </div>
 
         <div class="card-actions">
@@ -374,7 +397,7 @@ function renderCatalogo() {
     lista.appendChild(card);
   });
 
-  // botões "Adicionar ao carrinho"
+  // eventos botão adicionar carrinho
   lista.querySelectorAll(".btn-add-cart").forEach(btn => {
     btn.addEventListener("click", e => {
       const id = e.currentTarget.getAttribute("data-id");
@@ -384,7 +407,7 @@ function renderCatalogo() {
 }
 
 /**********************************************************
- * PÁGINA DE PRODUTO DETALHE
+ * PRODUTO DETALHE PAGE
  **********************************************************/
 function getParamId() {
   const url = new URL(window.location.href);
@@ -403,11 +426,15 @@ function renderProdutoDetalhe() {
     return;
   }
 
-  const parcela = prod.preco / 3;
+  const precoFinal = precoComDesconto(prod);
+  const parcela = precoFinal / 3;
 
   target.innerHTML = `
     <div class="produto-galeria">
-      <img src="${prod.imagem}" alt="${prod.nome}">
+      <div style="position:relative;">
+        ${prod.desconto ? `<span class="promo-tag">-20% OFF</span>` : ""}
+        <img src="${prod.imagem}" alt="${prod.nome}">
+      </div>
     </div>
 
     <div class="produto-info">
@@ -431,7 +458,16 @@ function renderProdutoDetalhe() {
     </div>
 
     <aside class="produto-comprar">
-      <p class="produto-preco">${formatarPreco(prod.preco)}</p>
+      ${
+        prod.desconto
+          ? `<div class="preco-antigo" style="text-decoration:line-through;color:var(--text-muted);font-size:.8rem;">
+              ${formatarPreco(prod.precoOriginal)} (-20%)
+            </div>`
+          : ""
+      }
+
+      <p class="produto-preco">${formatarPreco(precoFinal)}</p>
+
       <p class="produto-parcela">ou 3x de ${formatarPreco(parcela)} sem juros</p>
 
       <p class="produto-estoque">Em estoque</p>
@@ -451,7 +487,6 @@ function renderProdutoDetalhe() {
     </aside>
   `;
 
-  // botão "Adicionar ao carrinho"
   const btnAdd = target.querySelector(".btn-full-add");
   btnAdd.addEventListener("click", () => {
     adicionarAoCarrinhoPorID(prod.id);
@@ -459,7 +494,7 @@ function renderProdutoDetalhe() {
 }
 
 /**********************************************************
- * CHECKOUT (resumo e finalizar)
+ * CHECKOUT PAGE
  **********************************************************/
 function renderCheckout() {
   const lista = document.getElementById("checkout-lista");
@@ -499,7 +534,53 @@ function renderCheckout() {
 }
 
 /**********************************************************
- * TOAST (mensagem ao adicionar)
+ * FRETE SIMULADO POR CEP
+ * - lógica simples fake:
+ *   até CEP começando com 0-4: frete R$19,90, 5 dias úteis
+ *   5-7: frete R$24,90, 7 dias úteis
+ *   8-9: frete R$29,90, 10 dias úteis
+ **********************************************************/
+function calcularFrete(cep) {
+  if (!cep || cep.length < 5) return "CEP inválido.";
+  const primeira = cep.replace(/\D/g, "")[0]; // 1º dígito numérico
+
+  if (!primeira) return "CEP inválido.";
+
+  if ("01234".includes(primeira)) {
+    return "Frete: R$ 19,90 · prazo: 5 dias úteis";
+  } else if ("567".includes(primeira)) {
+    return "Frete: R$ 24,90 · prazo: 7 dias úteis";
+  } else {
+    return "Frete: R$ 29,90 · prazo: 10 dias úteis";
+  }
+}
+
+function configurarFrete() {
+  // modal carrinho
+  const cepModal = document.getElementById("cep-input-modal");
+  const btnModal = document.getElementById("calc-frete-modal");
+  const resModal = document.getElementById("frete-resultado-modal");
+
+  if (btnModal && cepModal && resModal) {
+    btnModal.addEventListener("click", () => {
+      resModal.textContent = calcularFrete(cepModal.value.trim());
+    });
+  }
+
+  // checkout
+  const cepCheckout = document.getElementById("cep-input-checkout");
+  const btnCheckout = document.getElementById("calc-frete-checkout");
+  const resCheckout = document.getElementById("frete-resultado-checkout");
+
+  if (btnCheckout && cepCheckout && resCheckout) {
+    btnCheckout.addEventListener("click", () => {
+      resCheckout.textContent = calcularFrete(cepCheckout.value.trim());
+    });
+  }
+}
+
+/**********************************************************
+ * TOAST
  **********************************************************/
 function mostrarToast(msg) {
   const aviso = document.createElement("div");
@@ -510,10 +591,10 @@ function mostrarToast(msg) {
 }
 
 /**********************************************************
- * INICIALIZAÇÃO
+ * INIT
  **********************************************************/
 document.addEventListener("DOMContentLoaded", () => {
-  // renderizações por página
+  // renderizações
   renderCatalogo();
   renderProdutoDetalhe();
   renderCheckout();
@@ -523,9 +604,10 @@ document.addEventListener("DOMContentLoaded", () => {
   renderCarrinho();
   configurarModalCarrinho();
 
-  // ui
+  // ui e interação
   configurarSideMenu();
   configurarCarrossel();
   iniciarContadorPromocao();
   configurarTema();
+  configurarFrete();
 });
