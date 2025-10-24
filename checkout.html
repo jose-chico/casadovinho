@@ -3,13 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Finalizar Compra | Casa de Vinho</title>
+  <title>Finalizar Compra | Casa de Vinho </title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://kit.fontawesome.com/9e62b207e5.js" crossorigin="anonymous"></script>
 </head>
 <body>
+
+  <!-- BARRA DE FRETE GRÁTIS -->
+  <div class="frete-bar">
+    <span>🚚 Frete grátis acima de R$ 199,00 Brasil inteiro</span>
+  </div>
+
   <header class="topo checkout-topo">
-    <a class="logo" href="index.html">🍷 Casa de Vinho</a>
+    <a class="logo" href="index.html">🍷 Casa de Vinho </a>
 
     <div class="topo-right">
       <button id="theme-toggle" class="theme-toggle" title="Trocar tema">
@@ -36,6 +42,26 @@
         Total: <span id="checkout-total">R$ 0,00</span>
       </p>
 
+      <!-- SIMULADOR DE FRETE NO CHECKOUT -->
+      <div class="frete-box frete-box-checkout">
+        <label for="cep-input-checkout" class="frete-label">
+          Calcular frete para sua região:
+        </label>
+        <div class="frete-row">
+          <input
+            id="cep-input-checkout"
+            class="frete-input"
+            type="text"
+            placeholder="Digite seu CEP"
+            maxlength="9"
+          />
+          <button id="calc-frete-checkout" class="frete-btn">
+            Calcular
+          </button>
+        </div>
+        <p id="frete-resultado-checkout" class="frete-resultado"></p>
+      </div>
+
       <button id="checkout-confirmar" class="checkout-btn-big">
         Confirmar Pedido
       </button>
@@ -52,10 +78,36 @@
       </button>
 
       <h2>Seu Carrinho</h2>
+
       <div id="cart-items" class="cart-items"></div>
 
       <div class="cart-footer">
-        <p>Total: <span id="cart-total">R$ 0,00</span></p>
+        <div class="cart-total-wrapper">
+          <p class="cart-total-line">
+            Total: <span id="cart-total">R$ 0,00</span>
+          </p>
+
+          <!-- SIMULADOR DE FRETE NO MODAL (também aparece aqui na página checkout se abrir o modal) -->
+          <div class="frete-box">
+            <label for="cep-input-modal" class="frete-label">
+              Calcular frete:
+            </label>
+            <div class="frete-row">
+              <input
+                id="cep-input-modal"
+                class="frete-input"
+                type="text"
+                placeholder="Digite seu CEP"
+                maxlength="9"
+              />
+              <button id="calc-frete-modal" class="frete-btn">
+                Calcular
+              </button>
+            </div>
+            <p id="frete-resultado-modal" class="frete-resultado"></p>
+          </div>
+        </div>
+
         <a class="checkout-btn" href="checkout.html">Finalizar Compra</a>
       </div>
     </div>
@@ -69,7 +121,7 @@
   </button>
 
   <footer class="footer">
-    <p>© 2025 Casa de Vinho 🍇</p>
+    <p>© 2025 Casa de Vinho  🍇</p>
   </footer>
 
   <script src="script.js"></script>

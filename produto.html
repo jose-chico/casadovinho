@@ -8,6 +8,12 @@
   <script src="https://kit.fontawesome.com/9e62b207e5.js" crossorigin="anonymous"></script>
 </head>
 <body>
+
+  <!-- BARRA DE FRETE GRÁTIS -->
+  <div class="frete-bar">
+    <span>🚚 Frete grátis acima de R$ 199,00 Brasil inteiro</span>
+  </div>
+
   <!-- HEADER FIXO -->
   <header class="topo">
     <div class="topo-left">
@@ -89,10 +95,10 @@
     </div>
   </aside>
 
-  <!-- CONTEÚDO DO PRODUTO -->
+  <!-- DETALHE DO PRODUTO -->
   <main class="page-wrapper">
     <section id="produto-detalhe" class="produto-detalhe">
-      <!-- script.js vai montar aqui -->
+      <!-- script.js vai montar -->
     </section>
   </main>
 
@@ -104,10 +110,36 @@
       </button>
 
       <h2>Seu Carrinho</h2>
+
       <div id="cart-items" class="cart-items"></div>
 
       <div class="cart-footer">
-        <p>Total: <span id="cart-total">R$ 0,00</span></p>
+        <div class="cart-total-wrapper">
+          <p class="cart-total-line">
+            Total: <span id="cart-total">R$ 0,00</span>
+          </p>
+
+          <!-- SIMULADOR DE FRETE NO MODAL -->
+          <div class="frete-box">
+            <label for="cep-input-modal" class="frete-label">
+              Calcular frete:
+            </label>
+            <div class="frete-row">
+              <input
+                id="cep-input-modal"
+                class="frete-input"
+                type="text"
+                placeholder="Digite seu CEP"
+                maxlength="9"
+              />
+              <button id="calc-frete-modal" class="frete-btn">
+                Calcular
+              </button>
+            </div>
+            <p id="frete-resultado-modal" class="frete-resultado"></p>
+          </div>
+        </div>
+
         <a class="checkout-btn" href="checkout.html">Finalizar Compra</a>
       </div>
     </div>
