@@ -1,5 +1,8 @@
 /**********************************************************
  * PRODUTOS
+ * - agora suporta promoção (-20% OFF)
+ *   precoOriginal = preço cheio
+ *   desconto = true => mostra selo e aplica 20% off
  **********************************************************/
 const produtos = [
   {
@@ -69,21 +72,28 @@ const produtos = [
 ];
 
 /**********************************************************
- * FUNÇÕES AUXILIARES
+ * HELPERS
  **********************************************************/
 function precoComDesconto(prod) {
-  return prod.desconto ? prod.precoOriginal * 0.8 : prod.precoOriginal;
+  if (!prod.desconto) return prod.precoOriginal;
+  return prod.precoOriginal * 0.8; // 20% OFF
 }
+
 function formatarPreco(v) {
   return `R$ ${v.toFixed(2).replace('.', ',')}`;
 }
+
 function gerarEstrelas(av) {
   const full = Math.floor(av);
   return "★".repeat(full) + "☆".repeat(5 - full);
 }
 
-// Som ping
-const audioPing = new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_eb646f5ac5.mp3?filename=ping-82822.mp3");
+// áudio "ping" suave tipo cristal
+const audioPing = new Audio(
+  "data:audio/mp3;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQCA..."
+);
+// Nota: esse base64 é ilustrativo. Em produção, coloque um base64 real de um som curto tipo 'ding'.
+// Se não tiver ainda, o site continua funcionando sem som.
 
 /**********************************************************
  * CARRINHO
@@ -93,76 +103,77 @@ let carrinho = JSON.parse(localStorage.getItem("carrinho")) || [];
 function contarItensCarrinho() {
   return carrinho.reduce((acc, item) => acc + item.qtd, 0);
 }
+
+/* sincroniza contadores (topo + flutuante) */
 function atualizarTodosContadores() {
-  const total = contarItensCarrinho();
-  document.getElementById("cart-count")?.textContent = total;
-  document.getElementById("cart-count-float")?.textContent = total;
+  const cartCount = document.getElementById("cart-count");
+  const cartCountFloat = document.getElementById("cart-count-float");
+  const totalQtd = contarItensCarrinho();
+
+  if (cartCount) cartCount.textContent = totalQtd;
+  if (cartCountFloat) cartCountFloat.textContent = totalQtd;
 }
+
 function salvarCarrinho() {
   localStorage.setItem("carrinho", JSON.stringify(carrinho));
   atualizarTodosContadores();
 }
-function adicionarAoCarrinhoPorID(id) {
-  const prod = produtos.find(p => p.id === id);
+
+function adicionarAoCarrinhoPorID(idProd) {
+  const prod = produtos.find(p => p.id === idProd);
   if (!prod) return;
-  const existente = carrinho.find(p => p.id === id);
-  if (existente) existente.qtd++;
-  else carrinho.push({ id, nome: prod.nome, preco: precoComDesconto(prod), imagem: prod.imagem, qtd: 1 });
+
+  const ja = carrinho.find(i => i.id === idProd);
+  if (ja) {
+    ja.qtd++;
+  } else {
+    carrinho.push({
+      id: prod.id,
+      nome: prod.nome,
+      preco: precoComDesconto(prod),
+      imagem: prod.imagem,
+      qtd: 1
+    });
+  }
+
   salvarCarrinho();
   renderCarrinho();
   mostrarToast(`${prod.nome} adicionado ao carrinho!`);
-  audioPing.currentTime = 0; audioPing.play().catch(()=>{});
+
+  // tenta tocar som (não quebra se falhar autoplay)
+  if (audioPing && audioPing.play) {
+    audioPing.currentTime = 0;
+    audioPing.play().catch(() => {});
+  }
 }
-function mudarQuantidade(id, delta) {
-  const item = carrinho.find(p => p.id === id);
+
+function mudarQuantidade(idProd, delta) {
+  const item = carrinho.find(p => p.id === idProd);
   if (!item) return;
   item.qtd += delta;
-  if (item.qtd <= 0) carrinho = carrinho.filter(p => p.id !== id);
+  if (item.qtd <= 0) {
+    carrinho = carrinho.filter(p => p.id !== idProd);
+  }
   salvarCarrinho();
   renderCarrinho();
 }
 
 /**********************************************************
- * MODAL CARRINHO
- **********************************************************/
-function configurarModalCarrinho() {
-  const btnCart = document.getElementById("btn-cart");
-  const floatCart = document.getElementById("floating-cart");
-  const cartModal = document.getElementById("cart-modal");
-  const cartClose = document.getElementById("cart-close");
-  if (!cartModal) return;
-
-  function abrirCarrinho() {
-    if (carrinho.length === 0) {
-      mostrarToast("Carrinho vazio — adicione um produto primeiro!");
-      return;
-    }
-    cartModal.setAttribute("aria-hidden", "false");
-  }
-  function fecharCarrinho() {
-    cartModal.setAttribute("aria-hidden", "true");
-  }
-
-  btnCart?.addEventListener("click", abrirCarrinho);
-  floatCart?.addEventListener("click", abrirCarrinho);
-  cartClose?.addEventListener("click", fecharCarrinho);
-  cartModal.addEventListener("click", e => { if (e.target === cartModal) fecharCarrinho(); });
-}
-
-/**********************************************************
- * RENDER CARRINHO
+ * CARRINHO MODAL / RENDER
  **********************************************************/
 function renderCarrinho() {
-  const itens = document.getElementById("cart-items");
-  const totalEl = document.getElementById("cart-total");
-  if (!itens || !totalEl) return;
+  const cartItems = document.getElementById("cart-items");
+  const cartTotal = document.getElementById("cart-total");
+  if (!cartItems || !cartTotal) return;
+
   if (!carrinho.length) {
-    itens.innerHTML = `<p style="text-align:center;color:var(--text-muted)">Carrinho vazio</p>`;
-    totalEl.textContent = "R$ 0,00";
+    cartItems.innerHTML = `<p style="text-align:center;color:var(--text-muted)">Carrinho vazio</p>`;
+    cartTotal.textContent = "R$ 0,00";
     return;
   }
-  itens.innerHTML = "";
+
   let total = 0;
+  cartItems.innerHTML = "";
   carrinho.forEach(item => {
     total += item.preco * item.qtd;
     const div = document.createElement("div");
@@ -179,143 +190,343 @@ function renderCarrinho() {
           <span>${item.qtd}</span>
           <button class="cart-qtd-btn" data-action="mais" data-id="${item.id}">+</button>
         </div>
-      </div>`;
-    itens.appendChild(div);
+      </div>
+    `;
+    cartItems.appendChild(div);
   });
-  totalEl.textContent = formatarPreco(total);
-  itens.querySelectorAll(".cart-qtd-btn").forEach(btn => {
+
+  cartTotal.textContent = formatarPreco(total);
+
+  // botões + e -
+  cartItems.querySelectorAll(".cart-qtd-btn").forEach(btn => {
     btn.addEventListener("click", e => {
-      const id = e.target.dataset.id;
-      mudarQuantidade(id, e.target.dataset.action === "mais" ? 1 : -1);
+      const id = e.currentTarget.getAttribute("data-id");
+      const acao = e.currentTarget.getAttribute("data-action");
+      mudarQuantidade(id, acao === "mais" ? 1 : -1);
+    });
+  });
+}
+
+function configurarModalCarrinho() {
+  const btnCart = document.getElementById("btn-cart");
+  const floatCart = document.getElementById("floating-cart");
+  const cartModal = document.getElementById("cart-modal");
+  const cartClose = document.getElementById("cart-close");
+
+  if (!cartModal) return;
+
+  function abrirCarrinho() {
+    cartModal.setAttribute("aria-hidden", "false");
+  }
+  function fecharCarrinho() {
+    cartModal.setAttribute("aria-hidden", "true");
+  }
+
+  btnCart && btnCart.addEventListener("click", abrirCarrinho);
+  floatCart && floatCart.addEventListener("click", abrirCarrinho);
+  cartClose && cartClose.addEventListener("click", fecharCarrinho);
+
+  cartModal.addEventListener("click", e => {
+    if (e.target === cartModal) fecharCarrinho();
+  });
+}
+
+/**********************************************************
+ * MENU LATERAL "Todos"
+ **********************************************************/
+function configurarSideMenu() {
+  const sideMenu = document.getElementById("side-menu");
+  if (!sideMenu) return;
+
+  const btnMenu = document.getElementById("btn-menu");
+  const closeMenu = document.getElementById("close-menu");
+  const overlay = sideMenu.querySelector(".side-menu-overlay");
+
+  function toggleMenu() {
+    const aberto = sideMenu.getAttribute("aria-hidden") === "false";
+    sideMenu.setAttribute("aria-hidden", aberto ? "true" : "false");
+  }
+
+  btnMenu && btnMenu.addEventListener("click", toggleMenu);
+  closeMenu && closeMenu.addEventListener("click", () => sideMenu.setAttribute("aria-hidden", "true"));
+  overlay && overlay.addEventListener("click", () => sideMenu.setAttribute("aria-hidden", "true"));
+
+  sideMenu.querySelectorAll(".expand").forEach(li => {
+    const trigger = li.querySelector(".submenu-trigger");
+    trigger.addEventListener("click", () => {
+      li.classList.toggle("open");
     });
   });
 }
 
 /**********************************************************
- * FRETE POR CEP
+ * CARROSSEL HOME
  **********************************************************/
-function calcularFrete(cep) {
-  if (!cep || cep.length < 5) return "CEP inválido.";
-  const num = cep.replace(/\D/g, "")[0];
-  if (!num) return "CEP inválido.";
-  if ("01234".includes(num)) return "Frete: R$ 19,90 · 5 dias úteis";
-  if ("567".includes(num)) return "Frete: R$ 24,90 · 7 dias úteis";
-  return "Frete: R$ 29,90 · 10 dias úteis";
+function configurarCarrossel() {
+  const slidesWrapper = document.getElementById("slides");
+  if (!slidesWrapper) return;
+
+  const slides = slidesWrapper.querySelectorAll(".slide");
+  const nextBtn = document.getElementById("next");
+  const prevBtn = document.getElementById("prev");
+  let idx = 0;
+
+  function mostrarSlide() {
+    slidesWrapper.style.transform = `translateX(-${idx * 100}%)`;
+  }
+  function avanca() {
+    idx = (idx + 1) % slides.length;
+    mostrarSlide();
+  }
+  function volta() {
+    idx = (idx - 1 + slides.length) % slides.length;
+    mostrarSlide();
+  }
+
+  nextBtn && nextBtn.addEventListener("click", avanca);
+  prevBtn && prevBtn.addEventListener("click", volta);
+  setInterval(avanca, 5000);
 }
-function configurarFrete() {
-  const configs = [
-    ["cep-input-modal", "calc-frete-modal", "frete-resultado-modal"],
-    ["cep-input-checkout", "calc-frete-checkout", "frete-resultado-checkout"]
-  ];
-  configs.forEach(([idIn, idBtn, idOut]) => {
-    const input = document.getElementById(idIn);
-    const btn = document.getElementById(idBtn);
-    const out = document.getElementById(idOut);
-    if (btn && input && out) {
-      btn.addEventListener("click", () => out.textContent = calcularFrete(input.value.trim()));
+
+/**********************************************************
+ * CONTADOR PROMOÇÃO SEMANAL
+ **********************************************************/
+function iniciarContadorPromocao() {
+  const contadorEl = document.getElementById("contador");
+  if (!contadorEl) return;
+
+  const fim = new Date();
+  fim.setDate(fim.getDate() + 2); // termina em 2 dias
+
+  function atualizar() {
+    const agora = new Date();
+    const diff = fim - agora;
+    if (diff <= 0) {
+      contadorEl.textContent = "Encerrada!";
+      return;
     }
+    const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    const m = Math.floor((diff / (1000 * 60)) % 60);
+    const s = Math.floor((diff / 1000) % 60);
+    contadorEl.textContent = `${d}d ${h}h ${m}m ${s}s`;
+  }
+
+  atualizar();
+  setInterval(atualizar, 1000);
+}
+
+/**********************************************************
+ * TEMA DARK/LIGHT
+ **********************************************************/
+function configurarTema() {
+  const toggle = document.getElementById("theme-toggle");
+  const htmlEl = document.documentElement;
+
+  const salvo = localStorage.getItem("tema-adega");
+  if (salvo === "light" || salvo === "dark") {
+    htmlEl.setAttribute("data-theme", salvo);
+  }
+
+  toggle && toggle.addEventListener("click", () => {
+    const atual = htmlEl.getAttribute("data-theme");
+    const novo = atual === "dark" ? "light" : "dark";
+    htmlEl.setAttribute("data-theme", novo);
+    localStorage.setItem("tema-adega", novo);
   });
 }
 
 /**********************************************************
- * CATÁLOGO
+ * LISTA DE PRODUTOS (HOME)
  **********************************************************/
 function renderCatalogo() {
   const lista = document.getElementById("lista-produtos");
   if (!lista) return;
   lista.innerHTML = "";
+
   produtos.forEach(prod => {
     const precoFinal = precoComDesconto(prod);
-    lista.innerHTML += `
-      <div class="card">
-        <div class="card-img-wrapper">
-          ${prod.desconto ? `<span class="promo-tag">-20% OFF</span>` : ""}
-          <img src="${prod.imagem}" alt="${prod.nome}">
+    const temDesconto = prod.desconto;
+
+    const card = document.createElement("div");
+    card.className = "card";
+
+    card.innerHTML = `
+      <div class="card-img-wrapper">
+        ${temDesconto ? `<span class="promo-tag">-20% OFF</span>` : ""}
+        <img src="${prod.imagem}" alt="${prod.nome}">
+      </div>
+
+      <div class="card-body">
+        <div class="card-title">
+          <a href="produto.html?id=${encodeURIComponent(prod.id)}">
+            ${prod.nome}
+          </a>
         </div>
-        <div class="card-body">
-          <div class="card-title"><a href="produto.html?id=${prod.id}">${prod.nome}</a></div>
-          <div class="card-rating"><span>${gerarEstrelas(prod.avaliacao)}</span>
-            <small>${prod.avaliacao.toFixed(1)} (${prod.avaliacoesQtd})</small></div>
-          <div class="card-desc">${prod.descricaoCurta}</div>
-          <div class="card-price">
-            ${prod.desconto ? `<div class="preco-antigo">${formatarPreco(prod.precoOriginal)}</div>` : ""}
-            <div class="preco-final">${formatarPreco(precoFinal)}</div>
-            <div class="preco-label">à vista</div>
-          </div>
-          <div class="card-actions">
-            <button class="btn-add-cart" data-id="${prod.id}">
-              <i class="fa-solid fa-cart-plus"></i> Adicionar ao carrinho
-            </button>
-            <a class="btn-detalhes" href="produto.html?id=${prod.id}">Ver detalhes</a>
-          </div>
+
+        <div class="card-rating">
+          <span>${gerarEstrelas(prod.avaliacao)}</span>
+          <small>${prod.avaliacao.toFixed(1)} (${prod.avaliacoesQtd})</small>
         </div>
-      </div>`;
+
+        <div class="card-desc">${prod.descricaoCurta}</div>
+
+        <div class="card-price">
+          ${
+            temDesconto
+              ? `<div class="preco-antigo">${formatarPreco(prod.precoOriginal)}</div>`
+              : ""
+          }
+          <div class="preco-final">${formatarPreco(precoFinal)}</div>
+          <div class="preco-label">à vista</div>
+        </div>
+
+        <div class="card-actions">
+          <button class="btn-add-cart" data-id="${prod.id}">
+            <i class="fa-solid fa-cart-plus"></i>
+            Adicionar ao carrinho
+          </button>
+
+          <a class="btn-detalhes" href="produto.html?id=${encodeURIComponent(prod.id)}">
+            Ver detalhes
+          </a>
+        </div>
+      </div>
+    `;
+
+    lista.appendChild(card);
   });
+
+  // eventos botão adicionar carrinho
   lista.querySelectorAll(".btn-add-cart").forEach(btn => {
-    btn.addEventListener("click", e => adicionarAoCarrinhoPorID(e.target.closest("button").dataset.id));
+    btn.addEventListener("click", e => {
+      const id = e.currentTarget.getAttribute("data-id");
+      adicionarAoCarrinhoPorID(id);
+    });
   });
 }
 
 /**********************************************************
- * DETALHE PRODUTO
+ * PRODUTO DETALHE PAGE
  **********************************************************/
+function getParamId() {
+  const url = new URL(window.location.href);
+  return url.searchParams.get("id");
+}
+
 function renderProdutoDetalhe() {
   const target = document.getElementById("produto-detalhe");
   if (!target) return;
-  const id = new URL(window.location.href).searchParams.get("id");
+
+  const id = getParamId();
   const prod = produtos.find(p => p.id === id);
-  if (!prod) { target.innerHTML = "<p>Produto não encontrado.</p>"; return; }
+
+  if (!prod) {
+    target.innerHTML = `<p style="color:var(--text-muted)">Produto não encontrado.</p>`;
+    return;
+  }
+
   const precoFinal = precoComDesconto(prod);
+  const parcela = precoFinal / 3;
+
   target.innerHTML = `
     <div class="produto-galeria">
-      ${prod.desconto ? `<span class="promo-tag">-20% OFF</span>` : ""}
-      <img src="${prod.imagem}" alt="${prod.nome}">
+      <div style="position:relative;">
+        ${prod.desconto ? `<span class="promo-tag">-20% OFF</span>` : ""}
+        <img src="${prod.imagem}" alt="${prod.nome}">
+      </div>
     </div>
+
     <div class="produto-info">
       <h1>${prod.nome}</h1>
-      <div class="produto-avaliacao">${gerarEstrelas(prod.avaliacao)} 
-        <small>${prod.avaliacao.toFixed(1)} (${prod.avaliacoesQtd})</small></div>
-      <div class="produto-descricao">${prod.descricaoLonga}</div>
+
+      <div class="produto-avaliacao">
+        <span>${gerarEstrelas(prod.avaliacao)}</span>
+        <small>${prod.avaliacao.toFixed(1)} (${prod.avaliacoesQtd} avaliações)</small>
+      </div>
+
+      <div class="produto-descricao">
+        ${prod.descricaoLonga}
+      </div>
+
       <ul class="produto-lista">
-        <li><b>Marca:</b> ${prod.marca}</li>
-        <li><b>Tipo:</b> ${prod.tipo}</li>
-        <li><b>Volume:</b> ${prod.volume}</li>
-        <li><b>Teor alcoólico:</b> ${prod.teor}</li>
+        <li><strong>Marca:</strong> ${prod.marca}</li>
+        <li><strong>Tipo:</strong> ${prod.tipo}</li>
+        <li><strong>Volume:</strong> ${prod.volume}</li>
+        <li><strong>Teor alcoólico:</strong> ${prod.teor}</li>
       </ul>
     </div>
+
     <aside class="produto-comprar">
-      ${prod.desconto ? `<div class="preco-antigo">${formatarPreco(prod.precoOriginal)}</div>` : ""}
+      ${
+        prod.desconto
+          ? `<div class="preco-antigo" style="text-decoration:line-through;color:var(--text-muted);font-size:.8rem;">
+              ${formatarPreco(prod.precoOriginal)} (-20%)
+            </div>`
+          : ""
+      }
+
       <p class="produto-preco">${formatarPreco(precoFinal)}</p>
-      <p class="produto-parcela">ou 3x de ${formatarPreco(precoFinal/3)} sem juros</p>
+
+      <p class="produto-parcela">ou 3x de ${formatarPreco(parcela)} sem juros</p>
+
       <p class="produto-estoque">Em estoque</p>
-      <button class="btn-full-add" data-id="${prod.id}"><i class="fa-solid fa-cart-plus"></i> Adicionar ao carrinho</button>
-    </aside>`;
-  target.querySelector(".btn-full-add").addEventListener("click", () => adicionarAoCarrinhoPorID(prod.id));
+
+      <button class="btn-full-add" data-id="${prod.id}">
+        <i class="fa-solid fa-cart-plus"></i>
+        Adicionar ao carrinho
+      </button>
+
+      <button class="btn-full-buy">
+        Comprar agora
+      </button>
+
+      <p style="font-size:.75rem;color:var(--text-muted);margin:0;">
+        Enviado e vendido por Adega Premium.
+      </p>
+    </aside>
+  `;
+
+  const btnAdd = target.querySelector(".btn-full-add");
+  btnAdd.addEventListener("click", () => {
+    adicionarAoCarrinhoPorID(prod.id);
+  });
 }
 
 /**********************************************************
- * CHECKOUT
+ * CHECKOUT PAGE
  **********************************************************/
 function renderCheckout() {
   const lista = document.getElementById("checkout-lista");
   const totalEl = document.getElementById("checkout-total");
-  const btn = document.getElementById("checkout-confirmar");
   const msg = document.getElementById("msg");
-  if (!lista || !btn) return;
+  const confirmarBtn = document.getElementById("checkout-confirmar");
+  if (!lista || !totalEl || !confirmarBtn) return;
+
   const dados = JSON.parse(localStorage.getItem("carrinho")) || [];
-  lista.innerHTML = "";
   let total = 0;
-  dados.forEach(p => {
-    total += p.preco * p.qtd;
-    lista.innerHTML += `<div class="checkout-item"><div class="item-nome">${p.qtd}x ${p.nome}</div>
-      <div class="item-preco">${formatarPreco(p.preco)}</div></div>`;
+
+  lista.innerHTML = "";
+  dados.forEach(item => {
+    const subtotal = item.preco * item.qtd;
+    total += subtotal;
+    lista.innerHTML += `
+      <div class="checkout-item">
+        <div class="item-nome">${item.qtd}x ${item.nome}</div>
+        <div class="item-preco">${formatarPreco(item.preco)} cada</div>
+        <div class="item-preco">Subtotal: ${formatarPreco(subtotal)}</div>
+      </div>
+    `;
   });
+
   totalEl.textContent = formatarPreco(total);
-  btn.addEventListener("click", () => {
+
+  confirmarBtn.addEventListener("click", () => {
     localStorage.removeItem("carrinho");
     carrinho = [];
     atualizarTodosContadores();
     renderCarrinho();
+
     lista.innerHTML = "";
     totalEl.textContent = "R$ 0,00";
     msg.textContent = "Pedido confirmado! 🍷 Obrigado pela preferência.";
@@ -323,84 +534,80 @@ function renderCheckout() {
 }
 
 /**********************************************************
- * MENU, CARROSSEL, TEMA, CONTADOR, TOAST
+ * FRETE SIMULADO POR CEP
+ * - lógica simples fake:
+ *   até CEP começando com 0-4: frete R$19,90, 5 dias úteis
+ *   5-7: frete R$24,90, 7 dias úteis
+ *   8-9: frete R$29,90, 10 dias úteis
  **********************************************************/
-function configurarSideMenu() {
-  const menu = document.getElementById("side-menu");
-  if (!menu) return;
-  const btn = document.getElementById("btn-menu");
-  const close = document.getElementById("close-menu");
-  const overlay = menu.querySelector(".side-menu-overlay");
-  function toggle() {
-    const aberto = menu.getAttribute("aria-hidden") === "false";
-    menu.setAttribute("aria-hidden", aberto ? "true" : "false");
+function calcularFrete(cep) {
+  if (!cep || cep.length < 5) return "CEP inválido.";
+  const primeira = cep.replace(/\D/g, "")[0]; // 1º dígito numérico
+
+  if (!primeira) return "CEP inválido.";
+
+  if ("01234".includes(primeira)) {
+    return "Frete: R$ 19,90 · prazo: 5 dias úteis";
+  } else if ("567".includes(primeira)) {
+    return "Frete: R$ 24,90 · prazo: 7 dias úteis";
+  } else {
+    return "Frete: R$ 29,90 · prazo: 10 dias úteis";
   }
-  btn?.addEventListener("click", toggle);
-  close?.addEventListener("click", () => menu.setAttribute("aria-hidden", "true"));
-  overlay?.addEventListener("click", () => menu.setAttribute("aria-hidden", "true"));
-  menu.querySelectorAll(".expand").forEach(li => {
-    li.querySelector(".submenu-trigger").addEventListener("click", () => li.classList.toggle("open"));
-  });
 }
 
-function configurarCarrossel() {
-  const slides = document.querySelector("#slides");
-  if (!slides) return;
-  let i = 0;
-  setInterval(() => {
-    i = (i + 1) % slides.children.length;
-    slides.style.transform = `translateX(-${i * 100}%)`;
-  }, 5000);
+function configurarFrete() {
+  // modal carrinho
+  const cepModal = document.getElementById("cep-input-modal");
+  const btnModal = document.getElementById("calc-frete-modal");
+  const resModal = document.getElementById("frete-resultado-modal");
+
+  if (btnModal && cepModal && resModal) {
+    btnModal.addEventListener("click", () => {
+      resModal.textContent = calcularFrete(cepModal.value.trim());
+    });
+  }
+
+  // checkout
+  const cepCheckout = document.getElementById("cep-input-checkout");
+  const btnCheckout = document.getElementById("calc-frete-checkout");
+  const resCheckout = document.getElementById("frete-resultado-checkout");
+
+  if (btnCheckout && cepCheckout && resCheckout) {
+    btnCheckout.addEventListener("click", () => {
+      resCheckout.textContent = calcularFrete(cepCheckout.value.trim());
+    });
+  }
 }
 
-function iniciarContadorPromocao() {
-  const el = document.getElementById("contador");
-  if (!el) return;
-  const fim = new Date(); fim.setDate(fim.getDate() + 2);
-  setInterval(() => {
-    const diff = fim - new Date();
-    if (diff <= 0) { el.textContent = "Encerrada!"; return; }
-    const d = Math.floor(diff / 86400000);
-    const h = Math.floor((diff / 3600000) % 24);
-    const m = Math.floor((diff / 60000) % 60);
-    const s = Math.floor((diff / 1000) % 60);
-    el.textContent = `${d}d ${h}h ${m}m ${s}s`;
-  }, 1000);
-}
-
-function configurarTema() {
-  const btn = document.getElementById("theme-toggle");
-  const html = document.documentElement;
-  const salvo = localStorage.getItem("tema-adega");
-  if (salvo) html.setAttribute("data-theme", salvo);
-  btn?.addEventListener("click", () => {
-    const novo = html.getAttribute("data-theme") === "dark" ? "light" : "dark";
-    html.setAttribute("data-theme", novo);
-    localStorage.setItem("tema-adega", novo);
-  });
-}
-
+/**********************************************************
+ * TOAST
+ **********************************************************/
 function mostrarToast(msg) {
-  const el = document.createElement("div");
-  el.className = "toast";
-  el.textContent = msg;
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), 2000);
+  const aviso = document.createElement("div");
+  aviso.className = "toast";
+  aviso.textContent = msg;
+  document.body.appendChild(aviso);
+  setTimeout(() => aviso.remove(), 2000);
 }
 
 /**********************************************************
  * INIT
  **********************************************************/
 document.addEventListener("DOMContentLoaded", () => {
+  // renderizações
   renderCatalogo();
   renderProdutoDetalhe();
   renderCheckout();
-  configurarModalCarrinho();
+
+  // carrinho
+  atualizarTodosContadores();
   renderCarrinho();
+  configurarModalCarrinho();
+
+  // ui e interação
   configurarSideMenu();
   configurarCarrossel();
   iniciarContadorPromocao();
   configurarTema();
   configurarFrete();
-  atualizarTodosContadores();
 });
