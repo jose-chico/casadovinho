@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Detalhes do Vinho | Casa de Vinho</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://kit.fontawesome.com/9e62b207e5.js" crossorigin="anonymous"></script>
+</head>
+<body>
+  <!-- HEADER -->
+  <header class="topo">
+    <div class="topo-left">
+      <button id="btn-menu" class="btn-menu">
+        <i class="fa-solid fa-bars"></i>
+        <span>Todos</span>
+      </button>
+
+      <a class="logo" href="index.html">🍷 Casa de Vinho</a>
+    </div>
+
+    <nav class="menu">
+      <a href="index.html">Início</a>
+      <a href="index.html#catalogo">Vinhos</a>
+      <a href="index.html#contato">Contato</a>
+    </nav>
+
+    <div class="topo-right">
+      <button id="theme-toggle" class="theme-toggle" title="Trocar tema">
+        <i class="fa-solid fa-circle-half-stroke"></i>
+      </button>
+
+      <button id="btn-cart" class="btn-cart" aria-label="Abrir carrinho">
+        <i class="fa-solid fa-cart-shopping"></i>
+        <span id="cart-count" class="cart-count">0</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- MENU LATERAL -->
+  <aside id="side-menu" class="side-menu" aria-hidden="true">
+    <div class="side-menu-overlay"></div>
+    <div class="side-menu-content">
+      <button id="close-menu" class="close-menu">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <div class="side-block">
+        <h2>Destaques</h2>
+        <ul>
+          <li><a href="#">Mais Vendidos</a></li>
+          <li><a href="#">Promoções</a></li>
+          <li><a href="#">Novos Rótulos</a></li>
+        </ul>
+      </div>
+
+      <hr />
+
+      <div class="side-block">
+        <h2>Tipos de Vinhos</h2>
+        <ul class="submenu">
+          <li class="expand">
+            <span class="submenu-trigger">Tintos <i class="fa-solid fa-chevron-down"></i></span>
+            <ul class="submenu-list">
+              <li><a href="#">Cabernet Sauvignon</a></li>
+              <li><a href="#">Merlot</a></li>
+              <li><a href="#">Malbec</a></li>
+            </ul>
+          </li>
+
+          <li class="expand">
+            <span class="submenu-trigger">Brancos <i class="fa-solid fa-chevron-down"></i></span>
+            <ul class="submenu-list">
+              <li><a href="#">Chardonnay</a></li>
+              <li><a href="#">Sauvignon Blanc</a></li>
+            </ul>
+          </li>
+
+          <li><a href="#">Rosés</a></li>
+          <li><a href="#">Espumantes</a></li>
+          <li><a href="#">Sobremesa / Doce</a></li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+  <!-- DETALHE DO PRODUTO -->
+  <main class="produto-page">
+    <div id="produto-detalhe" class="produto-detalhe">
+      <!-- script.js injeta aqui o layout do produto -->
+    </div>
+  </main>
+
+  <!-- MODAL DO CARRINHO -->
+  <div id="cart-modal" class="cart-modal" aria-hidden="true">
+    <div class="cart-content">
+      <button id="cart-close" class="cart-close">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <h2>Seu Carrinho</h2>
+      <div id="cart-items" class="cart-items"></div>
+
+      <div class="cart-footer">
+        <p>Total: <span id="cart-total">R$ 0,00</span></p>
+        <a class="checkout-btn" href="checkout.html">Finalizar Compra</a>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p>© 2025 Casa de Vinho · Brinde aos bons momentos 🍾</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
