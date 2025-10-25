@@ -27,6 +27,82 @@
       opacity: 1;
       transform: translateY(0);
     }
+
+    /* botões de ação */
+    .btn-danger {
+      background:#a4161a;
+      color:#fff;
+      border:none;
+      border-radius:8px;
+      padding:10px 16px;
+      font-size:.9rem;
+      font-weight:600;
+      cursor:pointer;
+    }
+    .btn-danger:hover {
+      filter:brightness(1.1);
+    }
+
+    .btn-warning {
+      background:#d4aa00;
+      color:#000;
+      border:none;
+      border-radius:8px;
+      padding:10px 16px;
+      font-size:.9rem;
+      font-weight:600;
+      cursor:pointer;
+    }
+    .btn-warning:hover {
+      filter:brightness(1.1);
+    }
+
+    .pedido-card {
+      background: var(--card-bg, #111);
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+      color: var(--text, #fff);
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .pedido-head {
+      color: var(--accent-contrast, #fff);
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .pedido-info p {
+      margin: 6px 0;
+      font-size: .95rem;
+      line-height: 1.4;
+    }
+
+    .pedido-info hr {
+      margin: 16px 0;
+      border: 0;
+      border-top: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .pedido-itens p {
+      margin: 4px 0;
+      font-size: .95rem;
+    }
+
+    .pedido-footer {
+      text-align: right;
+      margin-top: 16px;
+    }
+
+    .acoes-wrapper {
+      text-align:center;
+      margin-top:40px;
+      display:none;
+    }
+    .acoes-wrapper > *:not(:last-child){
+      margin-right:10px;
+    }
   </style>
 </head>
 <body>
@@ -59,11 +135,14 @@
 
     <div id="lista-pedidos" style="display:grid; gap:20px;"></div>
 
-    <div id="acoes-pedidos" style="text-align:center; margin-top:40px; display:none;">
-      <button id="btn-esvaziar" class="checkout-btn" style="background:#a4161a;">
+    <div id="acoes-pedidos" class="acoes-wrapper">
+      <button id="btn-esvaziar" class="btn-danger">
         Esvaziar Meus Pedidos
       </button>
-      <a href="index.html" class="checkout-btn" style="margin-left:10px;">Voltar à loja</a>
+
+      <a href="index.html" class="btn-warning" style="text-decoration:none; display:inline-block;">
+        Voltar à loja
+      </a>
     </div>
   </main>
 
@@ -97,7 +176,7 @@
         });
       }
 
-      // Toast helper
+      // Função Toast
       function mostrarToast(mensagem, cor = "#79d70f") {
         toast.textContent = mensagem;
         toast.style.background = cor;
@@ -107,53 +186,68 @@
         }, 2500);
       }
 
-      // Filtra apenas pedidos desse usuário
-      const meusPedidos = user
-        ? pedidosLS.filter(p => p.usuario === user.email)
-        : [];
+      // 1. Criar estrutura que associa cada pedido ao índice real no localStorage
+      // Vamos construir uma lista só dos pedidos do usuário,
+      // mas guardando também "indexGlobal" de cada um.
+      const meusPedidosMapeados = [];
+      pedidosLS.forEach((pedido, indexGlobal) => {
+        if (user && pedido.usuario === user.email) {
+          meusPedidosMapeados.push({
+            indexGlobal,
+            pedido
+          });
+        }
+      });
 
-      if (!meusPedidos.length) {
+      if (!meusPedidosMapeados.length) {
         lista.innerHTML = "<p style='text-align:center;color:var(--muted)'>Você ainda não fez nenhum pedido 🍷</p>";
         return;
       }
 
-      // Temos pedidos -> mostra os botões "esvaziar / voltar"
+      // Se tem pedidos, mostra barra de ações (esvaziar / voltar)
       acoes.style.display = "block";
 
-      // Renderiza pedidos (do mais novo pro mais antigo)
-      [...meusPedidos].reverse().forEach((pedido) => {
-        // garante que sempre vamos ter um idPedido
-        const idPedido = pedido.idPedido || new Date(pedido.data).getTime();
+      // 2. Renderizar do mais novo pro mais antigo
+      //    (copiamos e invertimos, mas SEM perder o indexGlobal)
+      [...meusPedidosMapeados].reverse().forEach(entrada => {
+        const { indexGlobal, pedido } = entrada;
 
+        // ID do pedido. Se por algum motivo não tiver (pedido antigo), gera algo legível.
+        const idPedido = pedido.idPedido
+          ? `#${pedido.idPedido}`
+          : `#${indexGlobal + 1}`;
+
+        // Cria card
         const card = document.createElement("div");
-        card.style.background = "var(--card-bg)";
-        card.style.padding = "24px";
-        card.style.borderRadius = "12px";
-        card.style.boxShadow = "0 0 15px rgba(0,0,0,0.3)";
-        card.style.color = "var(--text)";
-        card.setAttribute("data-idpedido", idPedido);
+        card.className = "pedido-card";
+        card.setAttribute("data-index-global", indexGlobal); // <- chave pra deletar certo
 
+        // Monta HTML interno
         let html = `
-          <h3 style="color:var(--accent);margin-bottom:10px;">
-            Pedido #${idPedido}
-          </h3>
+          <div class="pedido-head">Pedido ${idPedido}</div>
 
-          <p><strong>Data:</strong> ${pedido.data}</p>
-          <p><strong>Método de pagamento:</strong> ${pedido.metodo.toUpperCase()}</p>
-          <p><strong>Total:</strong> ${pedido.total}</p>
+          <div class="pedido-info">
+            <p><strong>Data:</strong> ${pedido.data}</p>
+            <p><strong>Método de pagamento:</strong> ${pedido.metodo.toUpperCase()}</p>
+            <p><strong>Total:</strong> ${pedido.total}</p>
 
-          <hr style="margin:10px 0;border-color:rgba(255,255,255,0.1);">
+            <hr>
 
-          <h4 style="margin-bottom:8px;">Itens:</h4>
+            <p><strong>Itens:</strong></p>
+          </div>
+
+          <div class="pedido-itens">
         `;
 
         pedido.itens.forEach(item => {
-          html += `<p>${item.qtd}x ${item.nome} - R$ ${item.preco.toFixed(2)}</p>`;
+          html += `<p>${item.qtd}× ${item.nome} - R$ ${item.preco.toFixed(2)}</p>`;
         });
 
         html += `
-          <div style="text-align:right; margin-top:16px;">
-            <button class="checkout-btn btn-deletar" style="background:#ba181b;font-size:.85rem;">
+          </div>
+
+          <div class="pedido-footer">
+            <button class="btn-danger btn-deletar">
               <i class="fa-solid fa-trash"></i> Excluir Pedido
             </button>
           </div>
@@ -163,40 +257,38 @@
         lista.appendChild(card);
       });
 
-      // Atualiza localStorage depois de deletar, e dá feedback
+      // 3. Função para salvar de volta e atualizar tela
       function atualizarPedidos(novosPedidos, mensagemToast) {
         localStorage.setItem("pedidos", JSON.stringify(novosPedidos));
         mostrarToast(mensagemToast);
-
-        // Espera o toast aparecer e some, e aí atualiza a página
         setTimeout(() => {
           window.location.reload();
         }, 1200);
       }
 
-      // Clicar em "Excluir Pedido" (um só)
+      // 4. Excluir UM pedido
       document.querySelectorAll(".btn-deletar").forEach(btn => {
         btn.addEventListener("click", (e) => {
-          const card = e.target.closest("[data-idpedido]");
-          const idApagar = card.getAttribute("data-idpedido");
+          const card = e.target.closest("[data-index-global]");
+          const indexGlobal = card.getAttribute("data-index-global");
 
           if (!confirm("Deseja realmente excluir este pedido?")) return;
 
-          // Mantém todos MENOS o que tem esse idPedido
-          const novosPedidos = pedidosLS.filter(p => {
-            const idP = p.idPedido || new Date(p.data).getTime().toString();
-            return !(p.usuario === user.email && idP === idApagar);
-          });
+          // Clonamos a lista atual
+          const novosPedidos = [...pedidosLS];
+
+          // Remove 1 item pelo índice correto do localStorage
+          novosPedidos.splice(Number(indexGlobal), 1);
 
           atualizarPedidos(novosPedidos, "🗑️ Pedido removido com sucesso!");
         });
       });
 
-      // Clicar em "Esvaziar Meus Pedidos" (todos)
+      // 5. Esvaziar TODOS os pedidos do usuário logado
       btnEsvaziar.addEventListener("click", () => {
         if (!confirm("Tem certeza que deseja apagar todos os seus pedidos?")) return;
 
-        const restantes = pedidosLS.filter(p => p.usuario !== user.email);
+        const restantes = pedidosLS.filter(p => !(user && p.usuario === user.email));
 
         atualizarPedidos(restantes, "🧹 Todos os pedidos foram apagados!");
       });
