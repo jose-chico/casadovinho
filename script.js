@@ -117,24 +117,24 @@ function atualizarTodosContadores() {
 function atualizarTodosContadores() {
   const cartCount = document.getElementById("cart-count");
   const cartCountFloat = document.getElementById("cart-count-float");
-  const btnCart = document.getElementById("btn-cart"); // botão do topo
+  const btnCart = document.getElementById("btn-cart"); // botão topo
+  const btnCartFloat = document.getElementById("floating-cart"); // botão flutuante
   const totalQtd = contarItensCarrinho();
 
   if (cartCount) cartCount.textContent = totalQtd;
   if (cartCountFloat) cartCountFloat.textContent = totalQtd;
 
-  // 🔒 Desativar/ativar o botão conforme o carrinho
-  if (btnCart) {
-    if (totalQtd === 0) {
-      btnCart.disabled = true;
-      btnCart.style.opacity = "0.5";
-      btnCart.style.cursor = "not-allowed";
-    } else {
-      btnCart.disabled = false;
-      btnCart.style.opacity = "1";
-      btnCart.style.cursor = "pointer";
+  // 🔒 Desativar ou ativar os botões conforme a quantidade de itens
+  const desativar = totalQtd === 0;
+
+  [btnCart, btnCartFloat].forEach(btn => {
+    if (btn) {
+      btn.disabled = desativar;
+      btn.style.opacity = desativar ? "0.5" : "1";
+      btn.style.cursor = desativar ? "not-allowed" : "pointer";
+      btn.style.pointerEvents = desativar ? "none" : "auto";
     }
-  }
+  });
 }
 
 
@@ -181,7 +181,7 @@ function mudarQuantidade(idProd, delta) {
   salvarCarrinho();
   renderCarrinho();
 }
-
+atualizarTodosContadores()
 /**********************************************************
  * CARRINHO MODAL / RENDER
  **********************************************************/
