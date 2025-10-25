@@ -4,8 +4,48 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Entrar | Casa de Vinho</title>
-  <link rel="stylesheet" href="login.css" />
+  <link rel="stylesheet" href="style.css" />
   <script src="https://kit.fontawesome.com/9e62b207e5.js" crossorigin="anonymous"></script>
+  <style>
+    .toast {
+      position: fixed;
+      top: 25px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: rgba(40, 20, 20, 0.95);
+      color: #fff;
+      border-radius: 10px;
+      padding: 14px 22px 10px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.6);
+      opacity: 0;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      flex-direction: column;
+      gap: 10px;
+      transition: all 0.4s ease;
+      z-index: 9999;
+      min-width: 260px;
+      border: 1px solid #d4aa00;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+    .toast i { font-size: 1rem; }
+    .toast-text { display: flex; align-items: center; gap: 10px; }
+
+    .toast-progress { position: relative; width: 100%; height: 4px; background: rgba(212,170,0,0.2); border-radius: 2px; overflow: hidden; }
+    .toast-progress-bar { position: absolute; top: 0; left: 0; height: 100%; background: #d4aa00; width: 100%; animation: progressBar 2.5s linear forwards; }
+    @keyframes progressBar { from {width:100%} to {width:0%} }
+
+    .toast.sucesso { border-color: #79d70f; }
+    .toast.erro { border-color: #d9534f; }
+    .toast.info { border-color: #d4aa00; }
+
+    .toast.sucesso i { color: #79d70f; }
+    .toast.erro i { color: #d9534f; }
+    .toast.info i { color: #d4aa00; }
+  </style>
 </head>
 <body>
 
@@ -15,43 +55,64 @@
 
   <div class="form-card">
     <h1>Entrar</h1>
-
     <input id="email" type="email" placeholder="E-mail" required>
     <input id="senha" type="password" placeholder="Senha" required>
-
     <button id="btnEntrar">Entrar</button>
-
     <p>Não tem conta? <a href="cadastro.html">Criar conta</a></p>
-
-    <div id="msg" class="form-msg"></div>
   </div>
 
   <footer class="footer">
     <p>© 2025 Casa de Vinho 🍇</p>
   </footer>
 
+  <!-- Toast -->
+  <div id="toast" class="toast info">
+    <div class="toast-text"><i class="fa-solid fa-wine-glass"></i><span></span></div>
+    <div class="toast-progress"><div class="toast-progress-bar"></div></div>
+  </div>
+
   <script>
-    document.getElementById("btnEntrar").addEventListener("click", () => {
-      const email = document.getElementById("email").value.trim();
-      const senha = document.getElementById("senha").value.trim();
-      const msg = document.getElementById("msg");
+    document.addEventListener("DOMContentLoaded", () => {
+      const toast = document.getElementById("toast");
+      const toastMsg = toast.querySelector("span");
 
-      const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-      const user = usuarios.find(u => u.email === email && u.senha === senha);
-
-      if (!user) {
-        msg.textContent = "E-mail ou senha incorretos.";
-        msg.style.color = "tomato";
-        return;
+      function mostrarToast(mensagem, tipo = "info") {
+        toast.className = `toast ${tipo}`;
+        let icone = "fa-wine-glass";
+        if (tipo === "sucesso") icone = "fa-check-circle";
+        if (tipo === "erro") icone = "fa-circle-xmark";
+        toast.querySelector("i").className = `fa-solid ${icone}`;
+        toastMsg.textContent = mensagem;
+        toast.classList.add("show");
+        const barra = toast.querySelector(".toast-progress-bar");
+        barra.style.animation = "none";
+        void barra.offsetWidth;
+        barra.style.animation = "progressBar 2.5s linear forwards";
+        setTimeout(() => toast.classList.remove("show"), 2500);
       }
 
-      localStorage.setItem("usuarioLogado", JSON.stringify(user));
-      msg.textContent = "Login realizado com sucesso! 🍷";
-      msg.style.color = "var(--success)";
+      document.getElementById("btnEntrar").addEventListener("click", () => {
+        const email = document.getElementById("email").value.trim();
+        const senha = document.getElementById("senha").value.trim();
 
-      setTimeout(() => window.location.href = "index.html", 1500);
+        if (!email || !senha) {
+          mostrarToast("Preencha todos os campos!", "erro");
+          return;
+        }
+
+        const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+        const user = usuarios.find(u => u.email === email && u.senha === senha);
+
+        if (!user) {
+          mostrarToast("E-mail ou senha incorretos!", "erro");
+          return;
+        }
+
+        localStorage.setItem("usuarioLogado", JSON.stringify(user));
+        mostrarToast("Login realizado com sucesso 🍷", "sucesso");
+        setTimeout(() => window.location.href = "index.html", 1500);
+      });
     });
   </script>
-
 </body>
 </html>

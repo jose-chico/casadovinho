@@ -39,7 +39,6 @@
     }
     .toast i {
       font-size: 1rem;
-      color: #d4aa00;
     }
     .toast-text {
       display: flex;
@@ -47,7 +46,7 @@
       gap: 10px;
     }
 
-    /* Barra de progresso dourada */
+    /* Barra dourada animada */
     .toast-progress {
       position: relative;
       width: 100%;
@@ -72,7 +71,16 @@
       to { width: 0%; }
     }
 
-    /* 🔘 Botões refinados */
+    /* Tipos de toast */
+    .toast.sucesso { border-color: #79d70f; }
+    .toast.erro { border-color: #d9534f; }
+    .toast.info { border-color: #d4aa00; }
+
+    .toast.sucesso i { color: #79d70f; }
+    .toast.erro i { color: #d9534f; }
+    .toast.info i { color: #d4aa00; }
+
+    /* Botões refinados */
     .btn-danger {
       background:#a4161a;
       color:#fff;
@@ -157,12 +165,7 @@
 </head>
 <body>
 
-  <!-- BARRA DE FRETE GRÁTIS -->
-  <div class="frete-bar">
-    <span>🚚 Frete grátis acima de R$ 199,00 Brasil inteiro</span>
-  </div>
-
-  <!-- HEADER -->
+  <!-- Header -->
   <header class="topo checkout-topo">
     <a class="logo" href="index.html">🍷 Casa de Vinho</a>
 
@@ -171,7 +174,6 @@
         <i class="fa-solid fa-circle-half-stroke"></i>
       </button>
 
-      <!-- Botão de sair -->
       <button id="btn-logout" class="btn-cart" style="display:none;">
         <i class="fa-solid fa-right-from-bracket"></i>
         <span class="cart-text">Sair</span>
@@ -179,20 +181,13 @@
     </div>
   </header>
 
-  <!-- CONTEÚDO -->
   <main class="page-wrapper" style="max-width:800px; margin:auto; padding:40px 20px;">
     <h1 style="text-align:center; margin-bottom:30px;">📦 Meus Pedidos</h1>
-
     <div id="lista-pedidos" style="display:grid; gap:20px;"></div>
 
     <div id="acoes-pedidos" class="acoes-wrapper">
-      <button id="btn-esvaziar" class="btn-danger">
-        Esvaziar Meus Pedidos
-      </button>
-
-      <a href="index.html" id="btn-voltar" class="btn-warning">
-        Voltar à loja
-      </a>
+      <button id="btn-esvaziar" class="btn-danger">Esvaziar Meus Pedidos</button>
+      <a href="index.html" id="btn-voltar" class="btn-warning">Voltar à loja</a>
     </div>
   </main>
 
@@ -200,8 +195,8 @@
     <p>© 2025 Casa de Vinho · Brinde aos bons momentos 🍇</p>
   </footer>
 
-  <!-- 🍇 Toast -->
-  <div id="toast" class="toast">
+  <!-- Toast -->
+  <div id="toast" class="toast info">
     <div class="toast-text"><i class="fa-solid fa-wine-glass"></i><span></span></div>
     <div class="toast-progress"><div class="toast-progress-bar"></div></div>
   </div>
@@ -219,35 +214,32 @@
       const user = JSON.parse(localStorage.getItem("usuarioLogado"));
       const pedidosLS = JSON.parse(localStorage.getItem("pedidos")) || [];
 
-      // Mostrar botão Sair
-      if (btnLogout && user) {
-        btnLogout.style.display = "flex";
-        btnLogout.addEventListener("click", () => {
-          if (confirm(`Deseja sair da conta de ${user.nome}?`)) {
-            localStorage.removeItem("usuarioLogado");
-            alert("Você saiu da sua conta 🍷");
-            window.location.href = "index.html";
-          }
-        });
-      }
-
-      // 🍾 Toast elegante com barra dourada
+      // 🍾 Função de toast aprimorada
       function mostrarToast(mensagem, tipo = "info") {
+        toast.className = `toast ${tipo}`;
         let icone = "fa-wine-glass";
         if (tipo === "sucesso") icone = "fa-check-circle";
         if (tipo === "erro") icone = "fa-circle-xmark";
-
         toast.querySelector("i").className = `fa-solid ${icone}`;
         toastMsg.textContent = mensagem;
         toast.classList.add("show");
 
-        // Reiniciar barra de progresso
         const barra = toast.querySelector(".toast-progress-bar");
         barra.style.animation = "none";
-        void barra.offsetWidth; // reinicia o CSS
+        void barra.offsetWidth;
         barra.style.animation = "progressBar 2.5s linear forwards";
 
         setTimeout(() => toast.classList.remove("show"), 2500);
+      }
+
+      // Mostrar botão sair se logado
+      if (btnLogout && user) {
+        btnLogout.style.display = "flex";
+        btnLogout.addEventListener("click", () => {
+          localStorage.removeItem("usuarioLogado");
+          mostrarToast("Você saiu da sua conta 🍷", "info");
+          setTimeout(() => window.location.href = "index.html", 1500);
+        });
       }
 
       // Filtrar pedidos do usuário
@@ -269,7 +261,6 @@
       [...meusPedidosMapeados].reverse().forEach(entrada => {
         const { indexGlobal, pedido } = entrada;
         const idPedido = pedido.idPedido ? `#${pedido.idPedido}` : `#${indexGlobal + 1}`;
-
         const card = document.createElement("div");
         card.className = "pedido-card";
         card.setAttribute("data-index-global", indexGlobal);
@@ -300,7 +291,7 @@
         lista.appendChild(card);
       });
 
-      // Atualizar localStorage e recarregar
+      // Atualizar pedidos e exibir toast
       function atualizarPedidos(novosPedidos, mensagem, tipo="sucesso") {
         localStorage.setItem("pedidos", JSON.stringify(novosPedidos));
         mostrarToast(mensagem, tipo);
@@ -312,25 +303,24 @@
         btn.addEventListener("click", e => {
           const card = e.target.closest("[data-index-global]");
           const indexGlobal = card.getAttribute("data-index-global");
-          if (!confirm("Deseja realmente excluir este pedido?")) return;
           const novos = [...pedidosLS];
           novos.splice(Number(indexGlobal), 1);
-          atualizarPedidos(novos, "🗑️ Pedido removido com sucesso!");
+          atualizarPedidos(novos, "🗑️ Pedido removido com sucesso!", "sucesso");
         });
       });
 
       // Esvaziar tudo
       btnEsvaziar.addEventListener("click", e => {
         e.preventDefault();
-        if (!confirm("Tem certeza que deseja apagar todos os seus pedidos?")) return;
         const restantes = pedidosLS.filter(p => !(user && p.usuario === user.email));
-        atualizarPedidos(restantes, "🧹 Todos os pedidos foram apagados!");
+        atualizarPedidos(restantes, "🧹 Todos os pedidos foram apagados!", "sucesso");
       });
 
       // Voltar à loja
       btnVoltar.addEventListener("click", e => {
         e.preventDefault();
-        window.location.href = "index.html";
+        mostrarToast("Voltando à loja...", "info");
+        setTimeout(() => window.location.href = "index.html", 1000);
       });
     });
   </script>
