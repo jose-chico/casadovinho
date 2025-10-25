@@ -6,67 +6,182 @@
   <title>Meus Pedidos | Casa de Vinho</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://kit.fontawesome.com/9e62b207e5.js" crossorigin="anonymous"></script>
+  <style>
+    /* 🔔 Estilo do Toast */
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: var(--accent-contrast);
+      color: #000;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      box-shadow: 0 0 12px rgba(0,0,0,0.3);
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: all 0.3s ease;
+      z-index: 9999;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
 </head>
 <body>
 
+  <!-- BARRA DE FRETE GRÁTIS -->
+  <div class="frete-bar">
+    <span>🚚 Frete grátis acima de R$ 199,00 Brasil inteiro</span>
+  </div>
+
+  <!-- HEADER -->
   <header class="topo checkout-topo">
     <a class="logo" href="index.html">🍷 Casa de Vinho</a>
+
+    <div class="topo-right">
+      <button id="theme-toggle" class="theme-toggle" title="Trocar tema">
+        <i class="fa-solid fa-circle-half-stroke"></i>
+      </button>
+
+      <!-- 🔸 Botão de sair -->
+      <button id="btn-logout" class="btn-cart" style="display:none;">
+        <i class="fa-solid fa-right-from-bracket"></i>
+        <span class="cart-text">Sair</span>
+      </button>
+    </div>
   </header>
 
-  <main class="page-wrapper" style="max-width:800px; margin:auto;">
-    <h1 style="text-align:center; margin:30px 0;">📦 Meus Pedidos</h1>
+  <!-- CONTEÚDO -->
+  <main class="page-wrapper" style="max-width:800px; margin:auto; padding:40px 20px;">
+    <h1 style="text-align:center; margin-bottom:30px;">📦 Meus Pedidos</h1>
 
     <div id="lista-pedidos" style="display:grid; gap:20px;"></div>
 
-    <div style="text-align:center; margin-top:30px;">
-      <a href="index.html" class="checkout-btn">Voltar à loja</a>
+    <div id="acoes-pedidos" style="text-align:center; margin-top:40px; display:none;">
+      <button id="btn-esvaziar" class="checkout-btn" style="background:#a4161a;">
+        Esvaziar Meus Pedidos
+      </button>
+      <a href="index.html" class="checkout-btn" style="margin-left:10px;">Voltar à loja</a>
     </div>
   </main>
 
   <footer class="footer">
-    <p>© 2025 Casa de Vinho 🍇</p>
+    <p>© 2025 Casa de Vinho · Brinde aos bons momentos 🍇</p>
   </footer>
+
+  <!-- 🔔 Toast de confirmação -->
+  <div id="toast" class="toast"></div>
 
   <script>
     document.addEventListener("DOMContentLoaded", () => {
+      const btnLogout = document.getElementById("btn-logout");
       const lista = document.getElementById("lista-pedidos");
-      const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
-      const user = JSON.parse(localStorage.getItem("usuarioLogado"));
+      const btnEsvaziar = document.getElementById("btn-esvaziar");
+      const acoes = document.getElementById("acoes-pedidos");
+      const toast = document.getElementById("toast");
 
-      const meusPedidos = user 
-        ? pedidos.filter(p => p.usuario === user.email)
-        : [];
+      const user = JSON.parse(localStorage.getItem("usuarioLogado"));
+      const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
+
+      // 🔐 Botão de sair
+      if (btnLogout && user) {
+        btnLogout.style.display = "flex";
+        btnLogout.addEventListener("click", () => {
+          if (confirm(`Deseja sair da conta de ${user.nome}?`)) {
+            localStorage.removeItem("usuarioLogado");
+            alert("Você saiu da sua conta 🍷");
+            window.location.href = "index.html";
+          }
+        });
+      }
+
+      // 🔔 Função de notificação visual
+      function mostrarToast(mensagem, cor = "#79d70f") {
+        toast.textContent = mensagem;
+        toast.style.background = cor;
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 2500);
+      }
+
+      // Filtra pedidos do usuário logado
+      const meusPedidos = user ? pedidos.filter(p => p.usuario === user.email) : [];
 
       if (!meusPedidos.length) {
         lista.innerHTML = "<p style='text-align:center;color:var(--muted)'>Você ainda não fez nenhum pedido 🍷</p>";
         return;
       }
 
+      // Mostra botões
+      acoes.style.display = "block";
+
+      // Renderiza os pedidos
       meusPedidos.reverse().forEach((pedido, index) => {
         const card = document.createElement("div");
         card.style.background = "var(--card-bg)";
-        card.style.padding = "20px";
+        card.style.padding = "24px";
         card.style.borderRadius = "12px";
-        card.style.boxShadow = "0 0 10px rgba(0,0,0,0.3)";
-        
+        card.style.boxShadow = "0 0 15px rgba(0,0,0,0.3)";
+        card.style.color = "var(--text)";
+        card.dataset.index = index;
+
+        const idPedido = pedido.idPedido ? `#${pedido.idPedido}` : `#${index + 1}`;
+
         let html = `
-          <h3 style="color:var(--accent);margin-bottom:10px;">Pedido #${index + 1}</h3>
+          <h3 style="color:var(--accent);margin-bottom:10px;">Pedido ${idPedido}</h3>
           <p><strong>Data:</strong> ${pedido.data}</p>
           <p><strong>Método de pagamento:</strong> ${pedido.metodo.toUpperCase()}</p>
           <p><strong>Total:</strong> ${pedido.total}</p>
           <hr style="margin:10px 0;border-color:rgba(255,255,255,0.1);">
-          <h4>Itens:</h4>
+          <h4 style="margin-bottom:8px;">Itens:</h4>
         `;
 
         pedido.itens.forEach(item => {
           html += `<p>${item.qtd}x ${item.nome} - R$ ${item.preco.toFixed(2)}</p>`;
         });
 
+        html += `
+          <div style="text-align:right; margin-top:12px;">
+            <button class="checkout-btn btn-deletar" style="background:#ba181b;font-size:.85rem;">
+              <i class="fa-solid fa-trash"></i> Excluir Pedido
+            </button>
+          </div>
+        `;
+
         card.innerHTML = html;
         lista.appendChild(card);
       });
+
+      // Atualiza lista de pedidos
+      function atualizarPedidos(novosPedidos, msgConfirmacao) {
+        localStorage.setItem("pedidos", JSON.stringify(novosPedidos));
+        mostrarToast(msgConfirmacao);
+        setTimeout(() => window.location.reload(), 1200);
+      }
+
+      // Excluir pedido individual
+      document.querySelectorAll(".btn-deletar").forEach((btn, idx) => {
+        btn.addEventListener("click", () => {
+          if (confirm("Deseja realmente excluir este pedido?")) {
+            const pedidosAtuais = JSON.parse(localStorage.getItem("pedidos")) || [];
+            const restantes = pedidosAtuais.filter(
+              (p, i) => !(p.usuario === user.email && i === pedidosAtuais.length - 1 - idx)
+            );
+            atualizarPedidos(restantes, "🗑️ Pedido removido com sucesso!");
+          }
+        });
+      });
+
+      // Esvaziar todos
+      btnEsvaziar.addEventListener("click", () => {
+        if (confirm("Tem certeza que deseja apagar todos os seus pedidos?")) {
+          const pedidosAtuais = JSON.parse(localStorage.getItem("pedidos")) || [];
+          const restantes = pedidosAtuais.filter(p => p.usuario !== user.email);
+          atualizarPedidos(restantes, "🧹 Todos os pedidos foram apagados!");
+        }
+      });
     });
   </script>
-
 </body>
 </html>
