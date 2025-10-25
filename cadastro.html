@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Criar Conta | Casa de Vinho</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://kit.fontawesome.com/9e62b207e5.js" crossorigin="anonymous"></script>
+  <style>
+    .form-card {
+      background-color: var(--bg-surface);
+      border-radius: 12px;
+      box-shadow: var(--shadow-card);
+      border: 1px solid var(--border-color);
+      max-width: 400px;
+      margin: 140px auto 60px;
+      padding: 24px;
+      display: grid;
+      gap: 12px;
+      color: var(--text-main);
+    }
+    .form-card h1 {
+      color: var(--accent-contrast);
+      font-size: 1.2rem;
+      margin: 0 0 10px;
+      text-align: center;
+    }
+    .form-card input {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-surface-alt);
+      color: var(--text-main);
+      font-size: .9rem;
+    }
+    .form-card button {
+      background: var(--accent-contrast);
+      border: none;
+      color: #000;
+      font-weight: 600;
+      border-radius: 8px;
+      padding: 12px;
+      cursor: pointer;
+      font-size: .9rem;
+    }
+    .form-card button:hover {
+      filter: brightness(1.1);
+    }
+    .form-card p {
+      text-align: center;
+      font-size: .85rem;
+    }
+    .form-card a {
+      color: var(--accent-contrast);
+      text-decoration: none;
+    }
+    .form-msg {
+      text-align: center;
+      font-size: .9rem;
+      font-weight: 600;
+      min-height: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="topo checkout-topo">
+    <a class="logo" href="index.html">🍷 Casa de Vinho</a>
+  </header>
+
+  <div class="form-card">
+    <h1>Crie sua conta</h1>
+
+    <input id="nome" type="text" placeholder="Nome completo" required>
+    <input id="email" type="email" placeholder="E-mail" required>
+    <input id="senha" type="password" placeholder="Senha" required>
+
+    <button id="btnCadastrar">Cadastrar</button>
+
+    <p>Já tem conta? <a href="login.html">Entrar</a></p>
+
+    <div id="msg" class="form-msg"></div>
+  </div>
+
+  <footer class="footer">
+    <p>© 2025 Casa de Vinho 🍇</p>
+  </footer>
+
+  <script>
+    document.getElementById("btnCadastrar").addEventListener("click", () => {
+      const nome = document.getElementById("nome").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const senha = document.getElementById("senha").value.trim();
+      const msg = document.getElementById("msg");
+
+      if (!nome || !email || !senha) {
+        msg.textContent = "Preencha todos os campos.";
+        msg.style.color = "tomato";
+        return;
+      }
+
+      const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+      const existe = usuarios.find(u => u.email === email);
+
+      if (existe) {
+        msg.textContent = "E-mail já cadastrado.";
+        msg.style.color = "tomato";
+        return;
+      }
+
+      usuarios.push({ nome, email, senha });
+      localStorage.setItem("usuarios", JSON.stringify(usuarios));
+
+      msg.textContent = "Conta criada com sucesso! 🎉";
+      msg.style.color = "var(--success)";
+
+      setTimeout(() => window.location.href = "login.html", 1500);
+    });
+  </script>
+</body>
+</html>

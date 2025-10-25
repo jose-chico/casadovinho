@@ -47,6 +47,40 @@
       margin: 12px 0;
       word-break: break-all;
     }
+
+    /* 🔄 LOADER DE PAGAMENTO */
+    .loader-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      color: var(--accent-contrast);
+      font-weight: 600;
+      font-size: 1rem;
+      z-index: 6000;
+      gap: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .loader-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .loader-spinner {
+      width: 60px;
+      height: 60px;
+      border: 6px solid rgba(255,255,255,0.2);
+      border-top-color: var(--accent-contrast);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
@@ -72,7 +106,6 @@
         <label><input type="radio" name="metodo" value="boleto"> 🧾 Boleto Bancário</label>
       </div>
 
-      <!-- ÁREA DINÂMICA DO PAGAMENTO -->
       <div id="area-metodo" class="metodo-box"></div>
 
       <button id="btn-pagar" class="checkout-btn-big">Pagar Agora</button>
@@ -85,6 +118,12 @@
     <p>© 2025 Casa de Vinho 🍇</p>
   </footer>
 
+  <!-- 🔄 Tela de carregamento -->
+  <div id="loader" class="loader-overlay">
+    <div class="loader-spinner"></div>
+    <p>Processando pagamento...</p>
+  </div>
+
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const resumo = document.getElementById("resumo-pedido");
@@ -92,6 +131,7 @@
       const btn = document.getElementById("btn-pagar");
       const areaMetodo = document.getElementById("area-metodo");
       const radios = document.querySelectorAll('input[name="metodo"]');
+      const loader = document.getElementById("loader");
 
       const itens = JSON.parse(localStorage.getItem("pedidoItens")) || [];
       const total = localStorage.getItem("pedidoTotal") || "R$ 0,00";
@@ -111,7 +151,6 @@
       html += `<p class="checkout-total">Total a pagar: <strong>${total}</strong></p>`;
       resumo.innerHTML = html;
 
-      // Função que mostra a área correspondente ao método
       function mostrarMetodo(tipo) {
         areaMetodo.style.display = "block";
         msg.textContent = "";
@@ -146,32 +185,40 @@
         }
       }
 
-      // Inicializa com Pix
       mostrarMetodo("pix");
-
-      // Troca visual conforme seleção
-      radios.forEach(r => {
-        r.addEventListener("change", e => mostrarMetodo(e.target.value));
-      });
+      radios.forEach(r => r.addEventListener("change", e => mostrarMetodo(e.target.value)));
 
       btn.addEventListener("click", () => {
         const metodo = document.querySelector('input[name="metodo"]:checked').value;
-        msg.textContent = `Pagamento via ${metodo.toUpperCase()} confirmado! 🍷 Obrigado pela compra.`;
-        msg.style.color = "var(--success)";
-        areaMetodo.style.display = "none";
 
-        // Limpa dados
-        localStorage.removeItem("pedidoItens");
-        localStorage.removeItem("pedidoTotal");
-        localStorage.removeItem("carrinho");
+        // 🔄 Mostra o loader
+        loader.classList.add("active");
 
-        // Simula redirecionamento pós-pagamento
+        // Simula o tempo de processamento
         setTimeout(() => {
-          window.location.href = "index.html";
+          loader.classList.remove("active");
+          msg.textContent = `Pagamento via ${metodo.toUpperCase()} confirmado! 🍷 Obrigado pela compra.`;
+          msg.style.color = "var(--success)";
+          areaMetodo.style.display = "none";
+
+          localStorage.removeItem("pedidoItens");
+          localStorage.removeItem("pedidoTotal");
+          localStorage.removeItem("carrinho");
+
+          // Redireciona após 2s
+          setTimeout(() => window.location.href = "index.html", 2000);
         }, 2500);
       });
     });
   </script>
 
 </body>
+<script>
+  const user = JSON.parse(localStorage.getItem("usuarioLogado"));
+  if (!user) {
+    alert("Você precisa estar logado para finalizar a compra.");
+    window.location.href = "login.html";
+  }
+</script>
+
 </html>
