@@ -7,28 +7,72 @@
   <link rel="stylesheet" href="style.css" />
   <script src="https://kit.fontawesome.com/9e62b207e5.js" crossorigin="anonymous"></script>
   <style>
-    /* Toast visual de confirmação */
+    /* 🍷 Toast elegante com barra dourada */
     .toast {
       position: fixed;
-      top: 20px;
-      right: 20px;
-      background: var(--accent-contrast);
-      color: #000;
-      padding: 12px 20px;
-      border-radius: 8px;
-      font-weight: 600;
-      box-shadow: 0 0 12px rgba(0,0,0,0.3);
+      top: 25px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: rgba(40, 20, 20, 0.95);
+      color: #fff;
+      border: 1px solid #d4aa00;
+      border-radius: 10px;
+      padding: 14px 22px 10px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.6);
       opacity: 0;
-      transform: translateY(-10px);
-      transition: all 0.3s ease;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-direction: column;
+      transition: all 0.4s ease;
       z-index: 9999;
+      width: fit-content;
+      min-width: 260px;
     }
     .toast.show {
       opacity: 1;
-      transform: translateY(0);
+      transform: translateX(-50%) translateY(0);
+      pointer-events: auto;
+    }
+    .toast i {
+      font-size: 1rem;
+      color: #d4aa00;
+    }
+    .toast-text {
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
-    /* botões de ação */
+    /* Barra de progresso dourada */
+    .toast-progress {
+      position: relative;
+      width: 100%;
+      height: 4px;
+      background: rgba(212, 170, 0, 0.2);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+    .toast-progress-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background: #d4aa00;
+      width: 100%;
+      transform-origin: left;
+      animation: progressBar 2.5s linear forwards;
+    }
+    @keyframes progressBar {
+      from { width: 100%; }
+      to { width: 0%; }
+    }
+
+    /* 🔘 Botões refinados */
     .btn-danger {
       background:#a4161a;
       color:#fff;
@@ -156,8 +200,11 @@
     <p>© 2025 Casa de Vinho · Brinde aos bons momentos 🍇</p>
   </footer>
 
-  <!-- Toast -->
-  <div id="toast" class="toast"></div>
+  <!-- 🍇 Toast -->
+  <div id="toast" class="toast">
+    <div class="toast-text"><i class="fa-solid fa-wine-glass"></i><span></span></div>
+    <div class="toast-progress"><div class="toast-progress-bar"></div></div>
+  </div>
 
   <script>
     document.addEventListener("DOMContentLoaded", () => {
@@ -167,11 +214,12 @@
       const btnVoltar = document.getElementById("btn-voltar");
       const acoes = document.getElementById("acoes-pedidos");
       const toast = document.getElementById("toast");
+      const toastMsg = toast.querySelector("span");
 
       const user = JSON.parse(localStorage.getItem("usuarioLogado"));
       const pedidosLS = JSON.parse(localStorage.getItem("pedidos")) || [];
 
-      // Mostrar botão Sair se logado
+      // Mostrar botão Sair
       if (btnLogout && user) {
         btnLogout.style.display = "flex";
         btnLogout.addEventListener("click", () => {
@@ -183,24 +231,30 @@
         });
       }
 
-      // Função Toast
-      function mostrarToast(mensagem, cor = "#79d70f") {
-        toast.textContent = mensagem;
-        toast.style.background = cor;
+      // 🍾 Toast elegante com barra dourada
+      function mostrarToast(mensagem, tipo = "info") {
+        let icone = "fa-wine-glass";
+        if (tipo === "sucesso") icone = "fa-check-circle";
+        if (tipo === "erro") icone = "fa-circle-xmark";
+
+        toast.querySelector("i").className = `fa-solid ${icone}`;
+        toastMsg.textContent = mensagem;
         toast.classList.add("show");
-        setTimeout(() => {
-          toast.classList.remove("show");
-        }, 2500);
+
+        // Reiniciar barra de progresso
+        const barra = toast.querySelector(".toast-progress-bar");
+        barra.style.animation = "none";
+        void barra.offsetWidth; // reinicia o CSS
+        barra.style.animation = "progressBar 2.5s linear forwards";
+
+        setTimeout(() => toast.classList.remove("show"), 2500);
       }
 
-      // Criar lista de pedidos do usuário com índice global
+      // Filtrar pedidos do usuário
       const meusPedidosMapeados = [];
       pedidosLS.forEach((pedido, indexGlobal) => {
         if (user && pedido.usuario === user.email) {
-          meusPedidosMapeados.push({
-            indexGlobal,
-            pedido
-          });
+          meusPedidosMapeados.push({ indexGlobal, pedido });
         }
       });
 
@@ -209,15 +263,12 @@
         return;
       }
 
-      // Mostrar botões
       acoes.style.display = "block";
 
-      // Renderizar pedidos (do mais novo pro mais antigo)
+      // Renderizar pedidos
       [...meusPedidosMapeados].reverse().forEach(entrada => {
         const { indexGlobal, pedido } = entrada;
-        const idPedido = pedido.idPedido
-          ? `#${pedido.idPedido}`
-          : `#${indexGlobal + 1}`;
+        const idPedido = pedido.idPedido ? `#${pedido.idPedido}` : `#${indexGlobal + 1}`;
 
         const card = document.createElement("div");
         card.className = "pedido-card";
@@ -225,7 +276,6 @@
 
         let html = `
           <div class="pedido-head">Pedido ${idPedido}</div>
-
           <div class="pedido-info">
             <p><strong>Data:</strong> ${pedido.data}</p>
             <p><strong>Método de pagamento:</strong> ${pedido.metodo.toUpperCase()}</p>
@@ -233,14 +283,11 @@
             <hr>
             <p><strong>Itens:</strong></p>
           </div>
-
           <div class="pedido-itens">
         `;
-
         pedido.itens.forEach(item => {
           html += `<p>${item.qtd}× ${item.nome} - R$ ${item.preco.toFixed(2)}</p>`;
         });
-
         html += `
           </div>
           <div class="pedido-footer">
@@ -249,53 +296,42 @@
             </button>
           </div>
         `;
-
         card.innerHTML = html;
         lista.appendChild(card);
       });
 
-      // Atualizar pedidos e exibir toast
-      function atualizarPedidos(novosPedidos, mensagemToast) {
+      // Atualizar localStorage e recarregar
+      function atualizarPedidos(novosPedidos, mensagem, tipo="sucesso") {
         localStorage.setItem("pedidos", JSON.stringify(novosPedidos));
-        mostrarToast(mensagemToast);
-        setTimeout(() => {
-          window.location.reload();
-        }, 1200);
+        mostrarToast(mensagem, tipo);
+        setTimeout(() => window.location.reload(), 1200);
       }
 
-      // Excluir 1 pedido
+      // Excluir pedido
       document.querySelectorAll(".btn-deletar").forEach(btn => {
-        btn.addEventListener("click", (e) => {
+        btn.addEventListener("click", e => {
           const card = e.target.closest("[data-index-global]");
           const indexGlobal = card.getAttribute("data-index-global");
-
           if (!confirm("Deseja realmente excluir este pedido?")) return;
-
-          const novosPedidos = [...pedidosLS];
-          novosPedidos.splice(Number(indexGlobal), 1);
-
-          atualizarPedidos(novosPedidos, "🗑️ Pedido removido com sucesso!");
+          const novos = [...pedidosLS];
+          novos.splice(Number(indexGlobal), 1);
+          atualizarPedidos(novos, "🗑️ Pedido removido com sucesso!");
         });
       });
 
-      // Esvaziar todos os pedidos
-      if (btnEsvaziar) {
-        btnEsvaziar.addEventListener("click", (e) => {
-          e.preventDefault();
-          if (!confirm("Tem certeza que deseja apagar todos os seus pedidos?")) return;
-
-          const restantes = pedidosLS.filter(p => !(user && p.usuario === user.email));
-          atualizarPedidos(restantes, "🧹 Todos os pedidos foram apagados!");
-        });
-      }
+      // Esvaziar tudo
+      btnEsvaziar.addEventListener("click", e => {
+        e.preventDefault();
+        if (!confirm("Tem certeza que deseja apagar todos os seus pedidos?")) return;
+        const restantes = pedidosLS.filter(p => !(user && p.usuario === user.email));
+        atualizarPedidos(restantes, "🧹 Todos os pedidos foram apagados!");
+      });
 
       // Voltar à loja
-      if (btnVoltar) {
-        btnVoltar.addEventListener("click", (e) => {
-          e.preventDefault();
-          window.location.href = "index.html";
-        });
-      }
+      btnVoltar.addEventListener("click", e => {
+        e.preventDefault();
+        window.location.href = "index.html";
+      });
     });
   </script>
 </body>
