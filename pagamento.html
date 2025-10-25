@@ -194,20 +194,36 @@
         // 🔄 Mostra o loader
         loader.classList.add("active");
 
-        // Simula o tempo de processamento
-        setTimeout(() => {
-          loader.classList.remove("active");
-          msg.textContent = `Pagamento via ${metodo.toUpperCase()} confirmado! 🍷 Obrigado pela compra.`;
-          msg.style.color = "var(--success)";
-          areaMetodo.style.display = "none";
+       setTimeout(() => {
+  loader.classList.remove("active");
+  msg.textContent = `Pagamento via ${metodo.toUpperCase()} confirmado! 🍷 Obrigado pela compra.`;
+  msg.style.color = "var(--success)";
+  areaMetodo.style.display = "none";
 
-          localStorage.removeItem("pedidoItens");
-          localStorage.removeItem("pedidoTotal");
-          localStorage.removeItem("carrinho");
+  // 🧾 Salva o pedido no histórico
+  const user = JSON.parse(localStorage.getItem("usuarioLogado"));
+  const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
 
-          // Redireciona após 2s
-          setTimeout(() => window.location.href = "index.html", 2000);
-        }, 2500);
+  const novoPedido = {
+    usuario: user ? user.email : "Visitante",
+    metodo: metodo,
+    data: new Date().toLocaleString("pt-BR"),
+    itens: itens,
+    total: total
+  };
+
+  pedidos.push(novoPedido);
+  localStorage.setItem("pedidos", JSON.stringify(pedidos));
+
+  // Limpa dados temporários
+  localStorage.removeItem("pedidoItens");
+  localStorage.removeItem("pedidoTotal");
+  localStorage.removeItem("carrinho");
+
+  // Redireciona após 2s
+  setTimeout(() => window.location.href = "meus-pedidos.html", 2000);
+}, 2500);
+
       });
     });
   </script>

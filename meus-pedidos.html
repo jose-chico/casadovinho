@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meus Pedidos | Casa de Vinho</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://kit.fontawesome.com/9e62b207e5.js" crossorigin="anonymous"></script>
+</head>
+<body>
+
+  <header class="topo checkout-topo">
+    <a class="logo" href="index.html">🍷 Casa de Vinho</a>
+  </header>
+
+  <main class="page-wrapper" style="max-width:800px; margin:auto;">
+    <h1 style="text-align:center; margin:30px 0;">📦 Meus Pedidos</h1>
+
+    <div id="lista-pedidos" style="display:grid; gap:20px;"></div>
+
+    <div style="text-align:center; margin-top:30px;">
+      <a href="index.html" class="checkout-btn">Voltar à loja</a>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>© 2025 Casa de Vinho 🍇</p>
+  </footer>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const lista = document.getElementById("lista-pedidos");
+      const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
+      const user = JSON.parse(localStorage.getItem("usuarioLogado"));
+
+      const meusPedidos = user 
+        ? pedidos.filter(p => p.usuario === user.email)
+        : [];
+
+      if (!meusPedidos.length) {
+        lista.innerHTML = "<p style='text-align:center;color:var(--muted)'>Você ainda não fez nenhum pedido 🍷</p>";
+        return;
+      }
+
+      meusPedidos.reverse().forEach((pedido, index) => {
+        const card = document.createElement("div");
+        card.style.background = "var(--card-bg)";
+        card.style.padding = "20px";
+        card.style.borderRadius = "12px";
+        card.style.boxShadow = "0 0 10px rgba(0,0,0,0.3)";
+        
+        let html = `
+          <h3 style="color:var(--accent);margin-bottom:10px;">Pedido #${index + 1}</h3>
+          <p><strong>Data:</strong> ${pedido.data}</p>
+          <p><strong>Método de pagamento:</strong> ${pedido.metodo.toUpperCase()}</p>
+          <p><strong>Total:</strong> ${pedido.total}</p>
+          <hr style="margin:10px 0;border-color:rgba(255,255,255,0.1);">
+          <h4>Itens:</h4>
+        `;
+
+        pedido.itens.forEach(item => {
+          html += `<p>${item.qtd}x ${item.nome} - R$ ${item.preco.toFixed(2)}</p>`;
+        });
+
+        card.innerHTML = html;
+        lista.appendChild(card);
+      });
+    });
+  </script>
+
+</body>
+</html>

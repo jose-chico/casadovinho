@@ -11,16 +11,24 @@
 <script>
   document.addEventListener("DOMContentLoaded", () => {
     const btnLogout = document.getElementById("btn-logout");
+    const btnPedidos = document.getElementById("btn-pedidos");
     const user = JSON.parse(localStorage.getItem("usuarioLogado"));
     const userWelcome = document.getElementById("user-welcome");
 
     if (btnLogout && user) {
-      btnLogout.style.display = "flex"; // mostra o botão
+      btnLogout.style.display = "flex";
 
-      // Mostra mensagem de boas-vindas
       if (userWelcome) {
         userWelcome.textContent = `Bem-vindo, ${user.nome.split(" ")[0]}! 🍷`;
         userWelcome.style.display = "inline-block";
+      }
+
+      // 🔸 Mostra botão "Meus Pedidos"
+      if (btnPedidos) {
+        btnPedidos.style.display = "flex";
+        btnPedidos.addEventListener("click", () => {
+          window.location.href = "meus-pedidos.html";
+        });
       }
 
       btnLogout.addEventListener("click", () => {
@@ -33,6 +41,7 @@
     }
   });
 </script>
+
 
 <body>
 
@@ -48,6 +57,12 @@
         <i class="fa-solid fa-bars"></i>
         <span>Todos</span>
       </button>
+
+      <button id="btn-pedidos" class="btn-cart" style="display:none;">
+  <i class="fa-solid fa-box"></i>
+  <span class="cart-text">Meus Pedidos</span>
+</button>
+
 
       <!-- 🔸 Botão sair -->
       <button id="btn-logout" class="btn-cart" style="display:none;">
