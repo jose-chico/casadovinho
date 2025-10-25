@@ -38,9 +38,11 @@
       font-size:.9rem;
       font-weight:600;
       cursor:pointer;
+      transition: 0.2s;
     }
     .btn-danger:hover {
       filter:brightness(1.1);
+      transform: scale(1.03);
     }
 
     .btn-warning {
@@ -52,9 +54,13 @@
       font-size:.9rem;
       font-weight:600;
       cursor:pointer;
+      transition: 0.2s;
+      text-decoration:none;
+      display:inline-block;
     }
     .btn-warning:hover {
       filter:brightness(1.1);
+      transform: scale(1.03);
     }
 
     .pedido-card {
@@ -67,7 +73,7 @@
     }
 
     .pedido-head {
-      color: var(--accent-contrast, #fff);
+      color: #e0b000;
       font-size: 1.1rem;
       font-weight: 600;
       margin-bottom: 10px;
@@ -140,7 +146,7 @@
         Esvaziar Meus Pedidos
       </button>
 
-      <a href="index.html" class="btn-warning" style="text-decoration:none; display:inline-block;">
+      <a href="index.html" id="btn-voltar" class="btn-warning">
         Voltar à loja
       </a>
     </div>
@@ -158,6 +164,7 @@
       const btnLogout = document.getElementById("btn-logout");
       const lista = document.getElementById("lista-pedidos");
       const btnEsvaziar = document.getElementById("btn-esvaziar");
+      const btnVoltar = document.getElementById("btn-voltar");
       const acoes = document.getElementById("acoes-pedidos");
       const toast = document.getElementById("toast");
 
@@ -186,9 +193,7 @@
         }, 2500);
       }
 
-      // 1. Criar estrutura que associa cada pedido ao índice real no localStorage
-      // Vamos construir uma lista só dos pedidos do usuário,
-      // mas guardando também "indexGlobal" de cada um.
+      // Criar lista de pedidos do usuário com índice global
       const meusPedidosMapeados = [];
       pedidosLS.forEach((pedido, indexGlobal) => {
         if (user && pedido.usuario === user.email) {
@@ -204,25 +209,20 @@
         return;
       }
 
-      // Se tem pedidos, mostra barra de ações (esvaziar / voltar)
+      // Mostrar botões
       acoes.style.display = "block";
 
-      // 2. Renderizar do mais novo pro mais antigo
-      //    (copiamos e invertimos, mas SEM perder o indexGlobal)
+      // Renderizar pedidos (do mais novo pro mais antigo)
       [...meusPedidosMapeados].reverse().forEach(entrada => {
         const { indexGlobal, pedido } = entrada;
-
-        // ID do pedido. Se por algum motivo não tiver (pedido antigo), gera algo legível.
         const idPedido = pedido.idPedido
           ? `#${pedido.idPedido}`
           : `#${indexGlobal + 1}`;
 
-        // Cria card
         const card = document.createElement("div");
         card.className = "pedido-card";
-        card.setAttribute("data-index-global", indexGlobal); // <- chave pra deletar certo
+        card.setAttribute("data-index-global", indexGlobal);
 
-        // Monta HTML interno
         let html = `
           <div class="pedido-head">Pedido ${idPedido}</div>
 
@@ -230,9 +230,7 @@
             <p><strong>Data:</strong> ${pedido.data}</p>
             <p><strong>Método de pagamento:</strong> ${pedido.metodo.toUpperCase()}</p>
             <p><strong>Total:</strong> ${pedido.total}</p>
-
             <hr>
-
             <p><strong>Itens:</strong></p>
           </div>
 
@@ -245,7 +243,6 @@
 
         html += `
           </div>
-
           <div class="pedido-footer">
             <button class="btn-danger btn-deletar">
               <i class="fa-solid fa-trash"></i> Excluir Pedido
@@ -257,7 +254,7 @@
         lista.appendChild(card);
       });
 
-      // 3. Função para salvar de volta e atualizar tela
+      // Atualizar pedidos e exibir toast
       function atualizarPedidos(novosPedidos, mensagemToast) {
         localStorage.setItem("pedidos", JSON.stringify(novosPedidos));
         mostrarToast(mensagemToast);
@@ -266,7 +263,7 @@
         }, 1200);
       }
 
-      // 4. Excluir UM pedido
+      // Excluir 1 pedido
       document.querySelectorAll(".btn-deletar").forEach(btn => {
         btn.addEventListener("click", (e) => {
           const card = e.target.closest("[data-index-global]");
@@ -274,24 +271,31 @@
 
           if (!confirm("Deseja realmente excluir este pedido?")) return;
 
-          // Clonamos a lista atual
           const novosPedidos = [...pedidosLS];
-
-          // Remove 1 item pelo índice correto do localStorage
           novosPedidos.splice(Number(indexGlobal), 1);
 
           atualizarPedidos(novosPedidos, "🗑️ Pedido removido com sucesso!");
         });
       });
 
-      // 5. Esvaziar TODOS os pedidos do usuário logado
-      btnEsvaziar.addEventListener("click", () => {
-        if (!confirm("Tem certeza que deseja apagar todos os seus pedidos?")) return;
+      // Esvaziar todos os pedidos
+      if (btnEsvaziar) {
+        btnEsvaziar.addEventListener("click", (e) => {
+          e.preventDefault();
+          if (!confirm("Tem certeza que deseja apagar todos os seus pedidos?")) return;
 
-        const restantes = pedidosLS.filter(p => !(user && p.usuario === user.email));
+          const restantes = pedidosLS.filter(p => !(user && p.usuario === user.email));
+          atualizarPedidos(restantes, "🧹 Todos os pedidos foram apagados!");
+        });
+      }
 
-        atualizarPedidos(restantes, "🧹 Todos os pedidos foram apagados!");
-      });
+      // Voltar à loja
+      if (btnVoltar) {
+        btnVoltar.addEventListener("click", (e) => {
+          e.preventDefault();
+          window.location.href = "index.html";
+        });
+      }
     });
   </script>
 </body>
