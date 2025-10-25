@@ -557,15 +557,19 @@ function renderCheckout() {
   totalEl.textContent = formatarPreco(total);
 
   confirmarBtn.addEventListener("click", () => {
-    localStorage.removeItem("carrinho");
-    carrinho = [];
-    atualizarTodosContadores();
-    renderCarrinho();
+  if (carrinho.length === 0) {
+    msg.textContent = "Carrinho vazio. Adicione produtos antes de finalizar.";
+    return;
+  }
 
-    lista.innerHTML = "";
-    totalEl.textContent = "R$ 0,00";
-    msg.textContent = "Pedido confirmado! 🍷 Obrigado pela preferência.";
-  });
+  // Salva o total e itens para usar na próxima página
+  localStorage.setItem("pedidoTotal", totalEl.textContent);
+  localStorage.setItem("pedidoItens", JSON.stringify(dados));
+
+  // Redireciona para a página de pagamento
+  window.location.href = "pagamento.html";
+});
+
 }
 
 /**********************************************************
