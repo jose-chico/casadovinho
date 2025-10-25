@@ -7,44 +7,59 @@
   <link rel="stylesheet" href="style.css" />
   <script src="https://kit.fontawesome.com/9e62b207e5.js" crossorigin="anonymous"></script>
   <style>
-    .toast {
-      position: fixed;
-      top: 25px;
-      left: 50%;
-      transform: translateX(-50%) translateY(-20px);
-      background: rgba(40, 20, 20, 0.95);
-      color: #fff;
-      border-radius: 10px;
-      padding: 14px 22px 10px;
-      font-size: 0.95rem;
-      font-weight: 500;
-      box-shadow: 0 4px 18px rgba(0,0,0,0.6);
-      opacity: 0;
-      pointer-events: none;
-      display: flex;
-      align-items: center;
-      flex-direction: column;
-      gap: 10px;
-      transition: all 0.4s ease;
-      z-index: 9999;
-      min-width: 260px;
-      border: 1px solid #d4aa00;
+    .form-card {
+      background-color: var(--bg-surface);
+      border-radius: 12px;
+      box-shadow: var(--shadow-card);
+      border: 1px solid var(--border-color);
+      max-width: 400px;
+      margin: 140px auto 60px;
+      padding: 24px;
+      display: grid;
+      gap: 12px;
+      color: var(--text-main);
     }
-    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
-    .toast i { font-size: 1rem; }
-    .toast-text { display: flex; align-items: center; gap: 10px; }
-
-    .toast-progress { position: relative; width: 100%; height: 4px; background: rgba(212,170,0,0.2); border-radius: 2px; overflow: hidden; }
-    .toast-progress-bar { position: absolute; top: 0; left: 0; height: 100%; background: #d4aa00; width: 100%; animation: progressBar 2.5s linear forwards; }
-    @keyframes progressBar { from {width:100%} to {width:0%} }
-
-    .toast.sucesso { border-color: #79d70f; }
-    .toast.erro { border-color: #d9534f; }
-    .toast.info { border-color: #d4aa00; }
-
-    .toast.sucesso i { color: #79d70f; }
-    .toast.erro i { color: #d9534f; }
-    .toast.info i { color: #d4aa00; }
+    .form-card h1 {
+      color: var(--accent-contrast);
+      font-size: 1.2rem;
+      margin: 0 0 10px;
+      text-align: center;
+    }
+    .form-card input {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-surface-alt);
+      color: var(--text-main);
+      font-size: .9rem;
+    }
+    .form-card button {
+      background: var(--accent-contrast);
+      border: none;
+      color: #000;
+      font-weight: 600;
+      border-radius: 8px;
+      padding: 12px;
+      cursor: pointer;
+      font-size: .9rem;
+    }
+    .form-card button:hover {
+      filter: brightness(1.1);
+    }
+    .form-card p {
+      text-align: center;
+      font-size: .85rem;
+    }
+    .form-card a {
+      color: var(--accent-contrast);
+      text-decoration: none;
+    }
+    .form-msg {
+      text-align: center;
+      font-size: .9rem;
+      font-weight: 600;
+      min-height: 20px;
+    }
   </style>
 </head>
 <body>
@@ -54,67 +69,52 @@
   </header>
 
   <div class="form-card">
-    <h1>Criar Conta</h1>
+    <h1>Crie sua conta</h1>
+
     <input id="nome" type="text" placeholder="Nome completo" required>
     <input id="email" type="email" placeholder="E-mail" required>
     <input id="senha" type="password" placeholder="Senha" required>
+
     <button id="btnCadastrar">Cadastrar</button>
+
     <p>Já tem conta? <a href="login.html">Entrar</a></p>
+
+    <div id="msg" class="form-msg"></div>
   </div>
 
   <footer class="footer">
     <p>© 2025 Casa de Vinho 🍇</p>
   </footer>
 
-  <!-- Toast -->
-  <div id="toast" class="toast info">
-    <div class="toast-text"><i class="fa-solid fa-wine-glass"></i><span></span></div>
-    <div class="toast-progress"><div class="toast-progress-bar"></div></div>
-  </div>
-
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const toast = document.getElementById("toast");
-      const toastMsg = toast.querySelector("span");
+    document.getElementById("btnCadastrar").addEventListener("click", () => {
+      const nome = document.getElementById("nome").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const senha = document.getElementById("senha").value.trim();
+      const msg = document.getElementById("msg");
 
-      function mostrarToast(mensagem, tipo = "info") {
-        toast.className = `toast ${tipo}`;
-        let icone = "fa-wine-glass";
-        if (tipo === "sucesso") icone = "fa-check-circle";
-        if (tipo === "erro") icone = "fa-circle-xmark";
-        toast.querySelector("i").className = `fa-solid ${icone}`;
-        toastMsg.textContent = mensagem;
-        toast.classList.add("show");
-        const barra = toast.querySelector(".toast-progress-bar");
-        barra.style.animation = "none";
-        void barra.offsetWidth;
-        barra.style.animation = "progressBar 2.5s linear forwards";
-        setTimeout(() => toast.classList.remove("show"), 2500);
+      if (!nome || !email || !senha) {
+        msg.textContent = "Preencha todos os campos.";
+        msg.style.color = "tomato";
+        return;
       }
 
-      document.getElementById("btnCadastrar").addEventListener("click", () => {
-        const nome = document.getElementById("nome").value.trim();
-        const email = document.getElementById("email").value.trim();
-        const senha = document.getElementById("senha").value.trim();
+      const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+      const existe = usuarios.find(u => u.email === email);
 
-        if (!nome || !email || !senha) {
-          mostrarToast("Preencha todos os campos!", "erro");
-          return;
-        }
+      if (existe) {
+        msg.textContent = "E-mail já cadastrado.";
+        msg.style.color = "tomato";
+        return;
+      }
 
-        const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+      usuarios.push({ nome, email, senha });
+      localStorage.setItem("usuarios", JSON.stringify(usuarios));
 
-        if (usuarios.find(u => u.email === email)) {
-          mostrarToast("E-mail já cadastrado!", "erro");
-          return;
-        }
+      msg.textContent = "Conta criada com sucesso! 🎉";
+      msg.style.color = "var(--success)";
 
-        usuarios.push({ nome, email, senha });
-        localStorage.setItem("usuarios", JSON.stringify(usuarios));
-
-        mostrarToast("Conta criada com sucesso 🍷", "sucesso");
-        setTimeout(() => window.location.href = "login.html", 1500);
-      });
+      setTimeout(() => window.location.href = "login.html", 1500);
     });
   </script>
 </body>
