@@ -136,7 +136,7 @@ function atualizarTodosContadores() {
     }
   });
 }
-
+mudarQuantidade
 
 function salvarCarrinho() {
   localStorage.setItem("carrinho", JSON.stringify(carrinho));
@@ -175,12 +175,23 @@ function mudarQuantidade(idProd, delta) {
   const item = carrinho.find(p => p.id === idProd);
   if (!item) return;
   item.qtd += delta;
+
   if (item.qtd <= 0) {
     carrinho = carrinho.filter(p => p.id !== idProd);
   }
+
   salvarCarrinho();
   renderCarrinho();
+
+  // 🔒 Se o carrinho ficou vazio, fecha o modal automaticamente
+  if (carrinho.length === 0) {
+    const cartModal = document.getElementById("cart-modal");
+    if (cartModal) {
+      cartModal.setAttribute("aria-hidden", "true");
+    }
+  }
 }
+
 atualizarTodosContadores()
 /**********************************************************
  * CARRINHO MODAL / RENDER
