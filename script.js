@@ -114,6 +114,30 @@ function atualizarTodosContadores() {
   if (cartCountFloat) cartCountFloat.textContent = totalQtd;
 }
 
+function atualizarTodosContadores() {
+  const cartCount = document.getElementById("cart-count");
+  const cartCountFloat = document.getElementById("cart-count-float");
+  const btnCart = document.getElementById("btn-cart"); // botão do topo
+  const totalQtd = contarItensCarrinho();
+
+  if (cartCount) cartCount.textContent = totalQtd;
+  if (cartCountFloat) cartCountFloat.textContent = totalQtd;
+
+  // 🔒 Desativar/ativar o botão conforme o carrinho
+  if (btnCart) {
+    if (totalQtd === 0) {
+      btnCart.disabled = true;
+      btnCart.style.opacity = "0.5";
+      btnCart.style.cursor = "not-allowed";
+    } else {
+      btnCart.disabled = false;
+      btnCart.style.opacity = "1";
+      btnCart.style.cursor = "pointer";
+    }
+  }
+}
+
+
 function salvarCarrinho() {
   localStorage.setItem("carrinho", JSON.stringify(carrinho));
   atualizarTodosContadores();
@@ -589,7 +613,7 @@ function mostrarToast(msg) {
   document.body.appendChild(aviso);
   setTimeout(() => aviso.remove(), 2000);
 }
-
+atualizarTodosContadores()
 /**********************************************************
  * INIT
  **********************************************************/
