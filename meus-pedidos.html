@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="style.css" />
   <script src="https://kit.fontawesome.com/9e62b207e5.js" crossorigin="anonymous"></script>
   <style>
-    /* 🔔 Estilo do Toast */
+    /* Toast visual de confirmação */
     .toast {
       position: fixed;
       top: 20px;
@@ -45,7 +45,7 @@
         <i class="fa-solid fa-circle-half-stroke"></i>
       </button>
 
-      <!-- 🔸 Botão de sair -->
+      <!-- Botão de sair -->
       <button id="btn-logout" class="btn-cart" style="display:none;">
         <i class="fa-solid fa-right-from-bracket"></i>
         <span class="cart-text">Sair</span>
@@ -71,7 +71,7 @@
     <p>© 2025 Casa de Vinho · Brinde aos bons momentos 🍇</p>
   </footer>
 
-  <!-- 🔔 Toast de confirmação -->
+  <!-- Toast -->
   <div id="toast" class="toast"></div>
 
   <script>
@@ -83,9 +83,9 @@
       const toast = document.getElementById("toast");
 
       const user = JSON.parse(localStorage.getItem("usuarioLogado"));
-      const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
+      const pedidosLS = JSON.parse(localStorage.getItem("pedidos")) || [];
 
-      // 🔐 Botão de sair
+      // Mostrar botão Sair se logado
       if (btnLogout && user) {
         btnLogout.style.display = "flex";
         btnLogout.addEventListener("click", () => {
@@ -97,43 +97,53 @@
         });
       }
 
-      // 🔔 Função de notificação visual
+      // Toast helper
       function mostrarToast(mensagem, cor = "#79d70f") {
         toast.textContent = mensagem;
         toast.style.background = cor;
         toast.classList.add("show");
-        setTimeout(() => toast.classList.remove("show"), 2500);
+        setTimeout(() => {
+          toast.classList.remove("show");
+        }, 2500);
       }
 
-      // Filtra pedidos do usuário logado
-      const meusPedidos = user ? pedidos.filter(p => p.usuario === user.email) : [];
+      // Filtra apenas pedidos desse usuário
+      const meusPedidos = user
+        ? pedidosLS.filter(p => p.usuario === user.email)
+        : [];
 
       if (!meusPedidos.length) {
         lista.innerHTML = "<p style='text-align:center;color:var(--muted)'>Você ainda não fez nenhum pedido 🍷</p>";
         return;
       }
 
-      // Mostra botões
+      // Temos pedidos -> mostra os botões "esvaziar / voltar"
       acoes.style.display = "block";
 
-      // Renderiza os pedidos
-      meusPedidos.reverse().forEach((pedido, index) => {
+      // Renderiza pedidos (do mais novo pro mais antigo)
+      [...meusPedidos].reverse().forEach((pedido) => {
+        // garante que sempre vamos ter um idPedido
+        const idPedido = pedido.idPedido || new Date(pedido.data).getTime();
+
         const card = document.createElement("div");
         card.style.background = "var(--card-bg)";
         card.style.padding = "24px";
         card.style.borderRadius = "12px";
         card.style.boxShadow = "0 0 15px rgba(0,0,0,0.3)";
         card.style.color = "var(--text)";
-        card.dataset.index = index;
-
-        const idPedido = pedido.idPedido ? `#${pedido.idPedido}` : `#${index + 1}`;
+        card.setAttribute("data-idpedido", idPedido);
 
         let html = `
-          <h3 style="color:var(--accent);margin-bottom:10px;">Pedido ${idPedido}</h3>
+          <h3 style="color:var(--accent);margin-bottom:10px;">
+            Pedido #${idPedido}
+          </h3>
+
           <p><strong>Data:</strong> ${pedido.data}</p>
           <p><strong>Método de pagamento:</strong> ${pedido.metodo.toUpperCase()}</p>
           <p><strong>Total:</strong> ${pedido.total}</p>
+
           <hr style="margin:10px 0;border-color:rgba(255,255,255,0.1);">
+
           <h4 style="margin-bottom:8px;">Itens:</h4>
         `;
 
@@ -142,7 +152,7 @@
         });
 
         html += `
-          <div style="text-align:right; margin-top:12px;">
+          <div style="text-align:right; margin-top:16px;">
             <button class="checkout-btn btn-deletar" style="background:#ba181b;font-size:.85rem;">
               <i class="fa-solid fa-trash"></i> Excluir Pedido
             </button>
@@ -153,33 +163,42 @@
         lista.appendChild(card);
       });
 
-      // Atualiza lista de pedidos
-      function atualizarPedidos(novosPedidos, msgConfirmacao) {
+      // Atualiza localStorage depois de deletar, e dá feedback
+      function atualizarPedidos(novosPedidos, mensagemToast) {
         localStorage.setItem("pedidos", JSON.stringify(novosPedidos));
-        mostrarToast(msgConfirmacao);
-        setTimeout(() => window.location.reload(), 1200);
+        mostrarToast(mensagemToast);
+
+        // Espera o toast aparecer e some, e aí atualiza a página
+        setTimeout(() => {
+          window.location.reload();
+        }, 1200);
       }
 
-      // Excluir pedido individual
-      document.querySelectorAll(".btn-deletar").forEach((btn, idx) => {
-        btn.addEventListener("click", () => {
-          if (confirm("Deseja realmente excluir este pedido?")) {
-            const pedidosAtuais = JSON.parse(localStorage.getItem("pedidos")) || [];
-            const restantes = pedidosAtuais.filter(
-              (p, i) => !(p.usuario === user.email && i === pedidosAtuais.length - 1 - idx)
-            );
-            atualizarPedidos(restantes, "🗑️ Pedido removido com sucesso!");
-          }
+      // Clicar em "Excluir Pedido" (um só)
+      document.querySelectorAll(".btn-deletar").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          const card = e.target.closest("[data-idpedido]");
+          const idApagar = card.getAttribute("data-idpedido");
+
+          if (!confirm("Deseja realmente excluir este pedido?")) return;
+
+          // Mantém todos MENOS o que tem esse idPedido
+          const novosPedidos = pedidosLS.filter(p => {
+            const idP = p.idPedido || new Date(p.data).getTime().toString();
+            return !(p.usuario === user.email && idP === idApagar);
+          });
+
+          atualizarPedidos(novosPedidos, "🗑️ Pedido removido com sucesso!");
         });
       });
 
-      // Esvaziar todos
+      // Clicar em "Esvaziar Meus Pedidos" (todos)
       btnEsvaziar.addEventListener("click", () => {
-        if (confirm("Tem certeza que deseja apagar todos os seus pedidos?")) {
-          const pedidosAtuais = JSON.parse(localStorage.getItem("pedidos")) || [];
-          const restantes = pedidosAtuais.filter(p => p.usuario !== user.email);
-          atualizarPedidos(restantes, "🧹 Todos os pedidos foram apagados!");
-        }
+        if (!confirm("Tem certeza que deseja apagar todos os seus pedidos?")) return;
+
+        const restantes = pedidosLS.filter(p => p.usuario !== user.email);
+
+        atualizarPedidos(restantes, "🧹 Todos os pedidos foram apagados!");
       });
     });
   </script>
