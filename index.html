@@ -12,9 +12,17 @@
   document.addEventListener("DOMContentLoaded", () => {
     const btnLogout = document.getElementById("btn-logout");
     const user = JSON.parse(localStorage.getItem("usuarioLogado"));
+    const userWelcome = document.getElementById("user-welcome");
 
     if (btnLogout && user) {
       btnLogout.style.display = "flex"; // mostra o botão
+
+      // Mostra mensagem de boas-vindas
+      if (userWelcome) {
+        userWelcome.textContent = `Bem-vindo, ${user.nome.split(" ")[0]}! 🍷`;
+        userWelcome.style.display = "inline-block";
+      }
+
       btnLogout.addEventListener("click", () => {
         if (confirm(`Deseja sair da conta de ${user.nome}?`)) {
           localStorage.removeItem("usuarioLogado");
@@ -41,11 +49,14 @@
         <span>Todos</span>
       </button>
 
-       <!-- 🔸 Botão sair -->
-  <button id="btn-logout" class="btn-cart" style="display:none;">
-    <i class="fa-solid fa-right-from-bracket"></i>
-    <span class="cart-text">Sair</span>
-  </button>
+      <!-- 🔸 Botão sair -->
+      <button id="btn-logout" class="btn-cart" style="display:none;">
+        <i class="fa-solid fa-right-from-bracket"></i>
+        <span class="cart-text">Sair</span>
+      </button>
+
+      <!-- 👤 Saudação -->
+      <span id="user-welcome" style="display:none; margin-left:10px; color:var(--success); font-weight:500;"></span>
 
       <a class="logo" href="index.html">🍷 Casa de Vinho</a>
     </div>
