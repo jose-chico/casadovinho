@@ -135,6 +135,13 @@
 
       const itens = JSON.parse(localStorage.getItem("pedidoItens")) || [];
       const total = localStorage.getItem("pedidoTotal") || "R$ 0,00";
+      const user = JSON.parse(localStorage.getItem("usuarioLogado"));
+
+      if (!user) {
+        alert("Você precisa estar logado para finalizar a compra.");
+        window.location.href = "login.html";
+        return;
+      }
 
       if (!itens.length) {
         resumo.innerHTML = "<p style='color: var(--text-muted)'>Nenhum pedido encontrado.</p>";
@@ -191,50 +198,48 @@
       btn.addEventListener("click", () => {
         const metodo = document.querySelector('input[name="metodo"]:checked').value;
 
-        // 🔄 Mostra o loader
+        // Gera ID único baseado em data e hora
+        const idPedido = new Date().toISOString().replace(/\D/g, '').slice(0,14);
+
+        // Mostra loader
         loader.classList.add("active");
 
-       setTimeout(() => {
-  loader.classList.remove("active");
-  msg.textContent = `Pagamento via ${metodo.toUpperCase()} confirmado! 🍷 Obrigado pela compra.`;
-  msg.style.color = "var(--success)";
-  areaMetodo.style.display = "none";
+        setTimeout(() => {
+          loader.classList.remove("active");
 
-  // 🧾 Salva o pedido no histórico
-  const user = JSON.parse(localStorage.getItem("usuarioLogado"));
-  const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
+          // Cria o pedido com ID único
+          const novoPedido = {
+            idPedido: idPedido,
+            usuario: user.email,
+            metodo: metodo,
+            data: new Date().toLocaleString("pt-BR"),
+            itens: itens,
+            total: total
+          };
 
-  const novoPedido = {
-    usuario: user ? user.email : "Visitante",
-    metodo: metodo,
-    data: new Date().toLocaleString("pt-BR"),
-    itens: itens,
-    total: total
-  };
+          const pedidosExistentes = JSON.parse(localStorage.getItem("pedidos")) || [];
+          pedidosExistentes.push(novoPedido);
+          localStorage.setItem("pedidos", JSON.stringify(pedidosExistentes));
 
-  pedidos.push(novoPedido);
-  localStorage.setItem("pedidos", JSON.stringify(pedidos));
+          // Limpa carrinho e dados temporários
+          localStorage.removeItem("pedidoItens");
+          localStorage.removeItem("pedidoTotal");
+          localStorage.removeItem("carrinho");
 
-  // Limpa dados temporários
-  localStorage.removeItem("pedidoItens");
-  localStorage.removeItem("pedidoTotal");
-  localStorage.removeItem("carrinho");
+          // Mostra mensagem com ID do pedido
+          msg.innerHTML = `✅ Pagamento via <strong>${metodo.toUpperCase()}</strong> confirmado!<br>
+          Número do pedido: <strong>#${idPedido}</strong><br>
+          Obrigado pela compra 🍷`;
 
-  // Redireciona após 2s
-  setTimeout(() => window.location.href = "meus-pedidos.html", 2000);
-}, 2500);
+          msg.style.color = "var(--success)";
+          areaMetodo.style.display = "none";
 
+          // Redireciona após 3s
+          setTimeout(() => window.location.href = "meus-pedidos.html", 3000);
+        }, 2500);
       });
     });
   </script>
 
 </body>
-<script>
-  const user = JSON.parse(localStorage.getItem("usuarioLogado"));
-  if (!user) {
-    alert("Você precisa estar logado para finalizar a compra.");
-    window.location.href = "login.html";
-  }
-</script>
-
 </html>
