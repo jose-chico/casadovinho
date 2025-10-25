@@ -6,6 +6,48 @@
   <title>Pagamento | Casa de Vinho</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://kit.fontawesome.com/9e62b207e5.js" crossorigin="anonymous"></script>
+  <style>
+    .metodo-box {
+      background: var(--bg-surface-alt);
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 12px;
+      text-align: center;
+      display: none;
+    }
+    .qr-code {
+      margin: 16px auto;
+      display: block;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      max-width: 200px;
+    }
+    .input-cartao {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+      text-align: left;
+    }
+    .input-cartao input {
+      width: 100%;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-surface);
+      color: var(--text-main);
+      font-size: .85rem;
+    }
+    .codigo-boleto {
+      background: var(--bg-surface);
+      border: 1px dashed var(--accent-contrast);
+      padding: 12px;
+      font-family: monospace;
+      border-radius: 6px;
+      font-size: .8rem;
+      margin: 12px 0;
+      word-break: break-all;
+    }
+  </style>
 </head>
 <body>
 
@@ -30,6 +72,9 @@
         <label><input type="radio" name="metodo" value="boleto"> 🧾 Boleto Bancário</label>
       </div>
 
+      <!-- ÁREA DINÂMICA DO PAGAMENTO -->
+      <div id="area-metodo" class="metodo-box"></div>
+
       <button id="btn-pagar" class="checkout-btn-big">Pagar Agora</button>
 
       <p id="msg-pagamento" class="checkout-msg"></p>
@@ -45,6 +90,8 @@
       const resumo = document.getElementById("resumo-pedido");
       const msg = document.getElementById("msg-pagamento");
       const btn = document.getElementById("btn-pagar");
+      const areaMetodo = document.getElementById("area-metodo");
+      const radios = document.querySelectorAll('input[name="metodo"]');
 
       const itens = JSON.parse(localStorage.getItem("pedidoItens")) || [];
       const total = localStorage.getItem("pedidoTotal") || "R$ 0,00";
@@ -58,20 +105,70 @@
       itens.forEach(item => {
         html += `<div class="checkout-item">
           <div class="item-nome">${item.qtd}x ${item.nome}</div>
-          <div class="item-preco">${(item.preco).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} cada</div>
+          <div class="item-preco">${item.preco.toLocaleString("pt-BR", {style: "currency", currency: "BRL"})} cada</div>
         </div>`;
       });
       html += `<p class="checkout-total">Total a pagar: <strong>${total}</strong></p>`;
       resumo.innerHTML = html;
 
+      // Função que mostra a área correspondente ao método
+      function mostrarMetodo(tipo) {
+        areaMetodo.style.display = "block";
+        msg.textContent = "";
+        if (tipo === "pix") {
+          const codigoPix = "00020126580014BR.GOV.BCB.PIX0136pagamento@casadevinho.com.br5204000053039865802BR5925Casa de Vinho LTDA6009Sao Paulo62070503***6304A1B2";
+          areaMetodo.innerHTML = `
+            <p>Escaneie o QR Code abaixo para pagar:</p>
+            <img class="qr-code" src="https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(codigoPix)}&size=200x200" alt="QR Code Pix">
+            <p style="font-size:.8rem;color:var(--text-muted)">Código Pix:</p>
+            <div class="codigo-boleto">${codigoPix}</div>
+          `;
+        } 
+        else if (tipo === "cartao") {
+          areaMetodo.innerHTML = `
+            <div class="input-cartao">
+              <input type="text" placeholder="Nome no cartão">
+              <input type="text" placeholder="Número do cartão (16 dígitos)" maxlength="19">
+              <div style="display:flex;gap:8px;">
+                <input type="text" placeholder="Validade (MM/AA)" maxlength="5">
+                <input type="text" placeholder="CVV" maxlength="3">
+              </div>
+            </div>
+          `;
+        } 
+        else if (tipo === "boleto") {
+          const codigo = "34191.79001 01043.510047 91020.150008 9 94870000015000";
+          areaMetodo.innerHTML = `
+            <p>Seu boleto foi gerado com vencimento em <strong>3 dias úteis</strong>.</p>
+            <div class="codigo-boleto">${codigo}</div>
+            <p style="font-size:.8rem;color:var(--text-muted)">Use este código para pagar no banco ou internet banking.</p>
+          `;
+        }
+      }
+
+      // Inicializa com Pix
+      mostrarMetodo("pix");
+
+      // Troca visual conforme seleção
+      radios.forEach(r => {
+        r.addEventListener("change", e => mostrarMetodo(e.target.value));
+      });
+
       btn.addEventListener("click", () => {
         const metodo = document.querySelector('input[name="metodo"]:checked').value;
         msg.textContent = `Pagamento via ${metodo.toUpperCase()} confirmado! 🍷 Obrigado pela compra.`;
+        msg.style.color = "var(--success)";
+        areaMetodo.style.display = "none";
 
-        // limpa o carrinho e dados
+        // Limpa dados
         localStorage.removeItem("pedidoItens");
         localStorage.removeItem("pedidoTotal");
         localStorage.removeItem("carrinho");
+
+        // Simula redirecionamento pós-pagamento
+        setTimeout(() => {
+          window.location.href = "index.html";
+        }, 2500);
       });
     });
   </script>
