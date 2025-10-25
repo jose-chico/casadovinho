@@ -7,6 +7,25 @@
   <link rel="stylesheet" href="style.css" />
   <script src="https://kit.fontawesome.com/9e62b207e5.js" crossorigin="anonymous"></script>
 </head>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const btnLogout = document.getElementById("btn-logout");
+    const user = JSON.parse(localStorage.getItem("usuarioLogado"));
+
+    if (btnLogout && user) {
+      btnLogout.style.display = "flex"; // mostra o botão
+      btnLogout.addEventListener("click", () => {
+        if (confirm(`Deseja sair da conta de ${user.nome}?`)) {
+          localStorage.removeItem("usuarioLogado");
+          alert("Você saiu da sua conta 🍷");
+          window.location.href = "index.html";
+        }
+      });
+    }
+  });
+</script>
+
 <body>
 
   <!-- BARRA DE FRETE GRÁTIS -->
@@ -21,6 +40,12 @@
         <i class="fa-solid fa-bars"></i>
         <span>Todos</span>
       </button>
+
+       <!-- 🔸 Botão sair -->
+  <button id="btn-logout" class="btn-cart" style="display:none;">
+    <i class="fa-solid fa-right-from-bracket"></i>
+    <span class="cart-text">Sair</span>
+  </button>
 
       <a class="logo" href="index.html">🍷 Casa de Vinho</a>
     </div>
